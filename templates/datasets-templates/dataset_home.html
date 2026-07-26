@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>تحليل ملف Excel | Analytix</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Tajawal, Arial, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            color: #ffffff;
+            background:
+                radial-gradient(
+                    circle at top,
+                    #142a50,
+                    #071321 55%
+                );
+        }
+
+        button,
+        input {
+            font-family: inherit;
+        }
+
+        .page-container {
+            width: min(1350px, 94%);
+            margin: 50px auto;
+        }
+
+        .welcome {
+            margin-bottom: 25px;
+            color: #cbd7ec;
+            font-size: 18px;
+        }
+
+        .welcome strong {
+            color: #75a0ff;
+        }
+
+        .upload-card,
+        .result-card,
+        .dashboard-card,
+        .sheet-card {
+            padding: 32px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(104, 151, 255, 0.2);
+            border-radius: 20px;
+            background: rgba(11, 25, 47, 0.94);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.3);
+        }
+
+        .upload-card {
+            text-align: center;
+        }
+
+        .upload-card h1 {
+            margin-bottom: 12px;
+            color: #75a0ff;
+            font-size: 32px;
+        }
+
+        .upload-description {
+            max-width: 750px;
+            margin: 0 auto 28px;
+            color: #aebbd2;
+            line-height: 1.9;
+        }
+
+        .upload-box {
+            padding: 50px 20px;
+            margin-bottom: 24px;
+            border: 2px dashed #4e83ff;
+            border-radius: 17px;
+            background: rgba(49, 95, 193, 0.08);
+            transition: 0.25s;
+        }
+
+        .upload-box:hover,
+        .upload-box.dragging {
+            border-color: #80a7ff;
+            background: rgba(49, 95, 193, 0.16);
+        }
+
+        .upload-icon {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 52px;
+        }
+
+        .upload-box h3 {
+            margin-bottom: 10px;
+        }
+
+        .upload-box p {
+            margin-bottom: 18px;
+            color: #93a2bc;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            max-width: 520px;
+            padding: 12px;
+            border: 1px solid rgba(106, 151, 244, 0.3);
+            border-radius: 10px;
+            color: #ffffff;
+            background: #0a172b;
+        }
+
+        input[type="file"]::file-selector-button {
+            padding: 10px 15px;
+            margin-left: 12px;
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            background: #315fc1;
+            cursor: pointer;
+        }
+
+        .selected-file {
+            display: none;
+            max-width: 650px;
+            padding: 12px;
+            margin: 18px auto 0;
+            overflow-wrap: anywhere;
+            border: 1px solid rgba(69, 217, 147, 0.3);
+            border-radius: 10px;
+            color: #caffdf;
+            background: rgba(24, 139, 86, 0.16);
+        }
+
+        .analyze-button {
+            padding: 14px 38px;
+            border: 1px solid rgba(126, 168, 255, 0.38);
+            border-radius: 11px;
+            color: #ffffff;
+            background: linear-gradient(
+                135deg,
+                #183b83,
+                #3f70d6
+            );
+            box-shadow: 0 10px 25px rgba(32, 79, 180, 0.3);
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+
+        .analyze-button:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(
+                135deg,
+                #2852a6,
+                #5286ef
+            );
+        }
+
+        .analyze-button:disabled {
+            opacity: 0.65;
+            cursor: wait;
+            transform: none;
+        }
+
+        .error-message,
+        .success-message {
+            padding: 16px;
+            margin-bottom: 25px;
+            overflow-wrap: anywhere;
+            border-radius: 12px;
+        }
+
+        .error-message {
+            border: 1px solid rgba(255, 92, 111, 0.35);
+            color: #ffd5db;
+            background: rgba(164, 24, 45, 0.22);
+        }
+
+        .success-message {
+            border: 1px solid rgba(69, 217, 147, 0.3);
+            color: #caffdf;
+            background: rgba(24, 139, 86, 0.18);
+        }
+
+        .section-title {
+            margin-bottom: 22px;
+            color: #82a9ff;
+            font-size: 25px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit,
+                minmax(210px, 1fr)
+            );
+            gap: 17px;
+        }
+
+        .summary-box {
+            min-width: 0;
+            padding: 22px;
+            border: 1px solid rgba(99, 145, 241, 0.2);
+            border-radius: 15px;
+            background: rgba(19, 42, 79, 0.68);
+        }
+
+        .summary-box span {
+            display: block;
+            margin-bottom: 10px;
+            color: #9daac0;
+            font-size: 14px;
+        }
+
+        .summary-box strong {
+            display: block;
+            overflow-wrap: anywhere;
+            color: #ffffff;
+            font-size: 23px;
+            line-height: 1.5;
+        }
+
+        .summary-box .number {
+            color: #82a9ff;
+            font-size: 31px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit,
+                minmax(430px, 1fr)
+            );
+            gap: 22px;
+        }
+
+        .chart-box {
+            min-width: 0;
+            height: 430px;
+            padding: 20px;
+            border: 1px solid rgba(99, 145, 241, 0.2);
+            border-radius: 16px;
+            background: rgba(8, 19, 36, 0.92);
+        }
+
+        .chart-box h3 {
+            margin-bottom: 18px;
+            color: #d7e3fb;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+        }
+
+        .sheet-card {
+            overflow: hidden;
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 20px;
+            margin-bottom: 22px;
+            border-bottom: 1px solid rgba(104, 151, 255, 0.18);
+        }
+
+        .sheet-header h2 {
+            color: #82a9ff;
+            font-size: 24px;
+        }
+
+        .sheet-badge {
+            padding: 8px 14px;
+            border: 1px solid rgba(69, 217, 147, 0.3);
+            border-radius: 20px;
+            color: #caffdf;
+            background: rgba(24, 139, 86, 0.16);
+            white-space: nowrap;
+        }
+
+        .sheet-summary {
+            margin-bottom: 25px;
+        }
+
+        .subsection {
+            margin-top: 28px;
+        }
+
+        .subsection h3 {
+            margin-bottom: 16px;
+            color: #d1def7;
+            font-size: 19px;
+        }
+
+        .columns-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .column-item {
+            max-width: 100%;
+            padding: 9px 13px;
+            overflow-wrap: anywhere;
+            border: 1px solid rgba(114, 157, 244, 0.25);
+            border-radius: 9px;
+            color: #cfe0ff;
+            background: rgba(47, 91, 184, 0.18);
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid rgba(111, 153, 235, 0.14);
+            border-radius: 13px;
+        }
+
+        table {
+            width: 100%;
+            min-width: 700px;
+            border-collapse: collapse;
+            background: #0a172b;
+        }
+
+        th,
+        td {
+            padding: 14px;
+            border-bottom: 1px solid rgba(111, 153, 235, 0.14);
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        th {
+            color: #ffffff;
+            background: #17366d;
+        }
+
+        td {
+            color: #cbd5e8;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover td {
+            background: rgba(59, 103, 198, 0.1);
+        }
+
+        .empty-message {
+            padding: 25px;
+            border: 1px solid rgba(255, 196, 92, 0.25);
+            border-radius: 12px;
+            color: #ffe7b0;
+            background: rgba(138, 90, 13, 0.14);
+            text-align: center;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-box {
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .page-container {
+                width: 95%;
+                margin: 30px auto;
+            }
+
+            .upload-card,
+            .result-card,
+            .dashboard-card,
+            .sheet-card {
+                padding: 22px 15px;
+            }
+
+            .upload-card h1 {
+                font-size: 25px;
+            }
+
+            .upload-box {
+                padding: 38px 10px;
+            }
+
+            .sheet-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-box {
+                height: 370px;
+                padding: 12px;
+            }
+
+            .chart-container {
+                height: 310px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    {% include 'header.html' %}
+
+    <main class="page-container">
+
+        <div class="welcome">
+            مرحبًا
+
+            <strong>
+                {% if user.first_name %}
+                    {{ user.first_name }}
+                {% else %}
+                    {{ user.username }}
+                {% endif %}
+            </strong>
+        </div>
+
+        {% if error_message %}
+            <div class="error-message">
+                {{ error_message }}
+            </div>
+        {% endif %}
+
+        <section class="upload-card">
+            <h1>
+                تحليل ملف Excel وإنشاء داشبورد
+            </h1>
+
+            <p class="upload-description">
+                ارفع ملف Excel، وسيقوم النظام بتحليل جميع أوراق
+                الملف وعرض الإحصائيات والقيم الفارغة ومعاينة
+                البيانات وإنشاء لوحة معلومات تلقائية.
+            </p>
+
+            <form
+                method="POST"
+                enctype="multipart/form-data"
+                id="excel-form"
+            >
+                {% csrf_token %}
+
+                <div
+                    class="upload-box"
+                    id="upload-box"
+                >
+                    <span class="upload-icon">
+                        📊
+                    </span>
+
+                    <h3>
+                        اختر ملف Excel
+                    </h3>
+
+                    <p>
+                        الصيغ المدعومة: XLSX وXLS
+                        — الحد الأعلى 10 ميجابايت
+                    </p>
+
+                    <input
+                        type="file"
+                        name="excel_file"
+                        id="excel-file"
+                        accept=".xlsx,.xls"
+                        required
+                    >
+
+                    <div
+                        class="selected-file"
+                        id="selected-file"
+                    ></div>
+                </div>
+
+                <button
+                    type="submit"
+                    class="analyze-button"
+                    id="analyze-button"
+                >
+                    تحليل الملف وإنشاء الداشبورد
+                </button>
+            </form>
+        </section>
+
+        {% if analysis_complete %}
+
+            <div class="success-message">
+                تم تحليل جميع أوراق الملف
+
+                <strong>
+                    {{ file_name }}
+                </strong>
+
+                وإنشاء الداشبورد بنجاح.
+            </div>
+
+            <section class="result-card">
+                <h2 class="section-title">
+                    الملخص العام للملف
+                </h2>
+
+                <div class="summary-grid">
+
+                    <div class="summary-box">
+                        <span>اسم الملف</span>
+
+                        <strong>
+                            {{ file_name }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <span>عدد الأوراق</span>
+
+                        <strong class="number">
+                            {{ sheets_count }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <span>إجمالي الصفوف</span>
+
+                        <strong class="number">
+                            {{ total_rows }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <span>إجمالي الأعمدة</span>
+
+                        <strong class="number">
+                            {{ total_columns }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <span>إجمالي القيم الفارغة</span>
+
+                        <strong class="number">
+                            {{ total_missing_values }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <span>إجمالي الأعمدة الرقمية</span>
+
+                        <strong class="number">
+                            {{ total_numeric_columns }}
+                        </strong>
+                    </div>
+
+                </div>
+            </section>
+
+            <section class="dashboard-card">
+                <h2 class="section-title">
+                    لوحة المعلومات
+                </h2>
+
+                <div class="dashboard-grid">
+
+                    <div class="chart-box">
+                        <h3>
+                            عدد الصفوف والأعمدة في كل ورقة
+                        </h3>
+
+                        <div class="chart-container">
+                            <canvas id="sheetsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-box">
+                        <h3>
+                            القيم الفارغة في كل ورقة
+                        </h3>
+
+                        <div class="chart-container">
+                            <canvas id="missingChart"></canvas>
+                        </div>
+                    </div>
+
+                    {% if numeric_chart_labels %}
+                        <div class="chart-box">
+                            <h3>
+                                متوسط الأعمدة الرقمية
+                            </h3>
+
+                            <div class="chart-container">
+                                <canvas id="meanChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-box">
+                            <h3>
+                                أعلى وأقل القيم الرقمية
+                            </h3>
+
+                            <div class="chart-container">
+                                <canvas id="rangeChart"></canvas>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </section>
+
+            {% for sheet in sheets_analysis %}
+
+                <section class="sheet-card">
+
+                    <div class="sheet-header">
+                        <h2>
+                            ورقة: {{ sheet.name }}
+                        </h2>
+
+                        {% if sheet.has_data %}
+                            <span class="sheet-badge">
+                                تحتوي على بيانات
+                            </span>
+                        {% else %}
+                            <span class="sheet-badge">
+                                ورقة فارغة
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="summary-grid sheet-summary">
+
+                        <div class="summary-box">
+                            <span>عدد الصفوف</span>
+
+                            <strong class="number">
+                                {{ sheet.rows_count }}
+                            </strong>
+                        </div>
+
+                        <div class="summary-box">
+                            <span>عدد الأعمدة</span>
+
+                            <strong class="number">
+                                {{ sheet.columns_count }}
+                            </strong>
+                        </div>
+
+                        <div class="summary-box">
+                            <span>القيم الفارغة</span>
+
+                            <strong class="number">
+                                {{ sheet.missing_count }}
+                            </strong>
+                        </div>
+
+                        <div class="summary-box">
+                            <span>الأعمدة الرقمية</span>
+
+                            <strong class="number">
+                                {{ sheet.numeric_columns_count }}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    {% if sheet.has_data %}
+
+                        <div class="subsection">
+                            <h3>
+                                أسماء الأعمدة
+                            </h3>
+
+                            <div class="columns-list">
+                                {% for column in sheet.columns %}
+                                    <span class="column-item">
+                                        {{ column }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="subsection">
+                            <h3>
+                                أنواع بيانات الأعمدة
+                            </h3>
+
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>اسم العمود</th>
+                                            <th>نوع البيانات</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for item in sheet.column_types %}
+                                            <tr>
+                                                <td>
+                                                    {{ item.name }}
+                                                </td>
+
+                                                <td>
+                                                    {{ item.type }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="subsection">
+                            <h3>
+                                القيم الفارغة
+                            </h3>
+
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>اسم العمود</th>
+                                            <th>عدد القيم الفارغة</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for item in sheet.missing_values %}
+                                            <tr>
+                                                <td>
+                                                    {{ item.column }}
+                                                </td>
+
+                                                <td>
+                                                    {{ item.count }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {% if sheet.numeric_statistics %}
+                            <div class="subsection">
+                                <h3>
+                                    إحصائيات الأعمدة الرقمية
+                                </h3>
+
+                                <div class="table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>العمود</th>
+                                                <th>العدد</th>
+                                                <th>المتوسط</th>
+                                                <th>الانحراف المعياري</th>
+                                                <th>أقل قيمة</th>
+                                                <th>أعلى قيمة</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {% for item in sheet.numeric_statistics %}
+                                                <tr>
+                                                    <td>
+                                                        {{ item.column }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ item.count|default:"-" }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ item.mean|default:"-" }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ item.std|default:"-" }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ item.min|default:"-" }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ item.max|default:"-" }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="subsection">
+                            <h3>
+                                معاينة أول 10 صفوف
+                            </h3>
+
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            {% for column in sheet.columns %}
+                                                <th>
+                                                    {{ column }}
+                                                </th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for row in sheet.preview_rows %}
+                                            <tr>
+                                                {% for column, value in row.items %}
+                                                    <td>
+                                                        {{ value }}
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="{{ sheet.columns_count }}">
+                                                    لا توجد صفوف قابلة للمعاينة.
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    {% else %}
+
+                        <div class="empty-message">
+                            هذه الورقة لا تحتوي على بيانات قابلة للتحليل.
+                        </div>
+
+                    {% endif %}
+
+                </section>
+
+            {% endfor %}
+
+        {% endif %}
+
+    </main>
+
+    {% include 'footer.html' %}
+
+    <script>
+        (function () {
+            const form =
+                document.getElementById("excel-form");
+
+            const fileInput =
+                document.getElementById("excel-file");
+
+            const selectedFile =
+                document.getElementById("selected-file");
+
+            const analyzeButton =
+                document.getElementById("analyze-button");
+
+            const uploadBox =
+                document.getElementById("upload-box");
+
+            if (
+                !form ||
+                !fileInput ||
+                !selectedFile ||
+                !analyzeButton ||
+                !uploadBox
+            ) {
+                return;
+            }
+
+            fileInput.addEventListener(
+                "change",
+                function () {
+                    if (
+                        fileInput.files &&
+                        fileInput.files.length > 0
+                    ) {
+                        selectedFile.textContent =
+                            "الملف المختار: " +
+                            fileInput.files[0].name;
+
+                        selectedFile.style.display =
+                            "block";
+                    } else {
+                        selectedFile.textContent = "";
+
+                        selectedFile.style.display =
+                            "none";
+                    }
+                }
+            );
+
+            uploadBox.addEventListener(
+                "dragover",
+                function (event) {
+                    event.preventDefault();
+
+                    uploadBox.classList.add(
+                        "dragging"
+                    );
+                }
+            );
+
+            uploadBox.addEventListener(
+                "dragleave",
+                function () {
+                    uploadBox.classList.remove(
+                        "dragging"
+                    );
+                }
+            );
+
+            uploadBox.addEventListener(
+                "drop",
+                function () {
+                    uploadBox.classList.remove(
+                        "dragging"
+                    );
+                }
+            );
+
+            form.addEventListener(
+                "submit",
+                function () {
+                    analyzeButton.disabled = true;
+
+                    analyzeButton.textContent =
+                        "جارٍ تحليل جميع الأوراق...";
+                }
+            );
+        })();
+    </script>
+
+    {% if analysis_complete %}
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        {{ chart_sheet_names|json_script:"chart-sheet-names" }}
+        {{ chart_rows|json_script:"chart-rows" }}
+        {{ chart_columns|json_script:"chart-columns" }}
+        {{ chart_missing_values|json_script:"chart-missing-values" }}
+
+        {{ numeric_chart_labels|json_script:"numeric-chart-labels" }}
+        {{ numeric_chart_means|json_script:"numeric-chart-means" }}
+        {{ numeric_chart_max_values|json_script:"numeric-chart-max-values" }}
+        {{ numeric_chart_min_values|json_script:"numeric-chart-min-values" }}
+
+        <script>
+            const sheetNames = JSON.parse(
+                document.getElementById(
+                    "chart-sheet-names"
+                ).textContent
+            );
+
+            const sheetRows = JSON.parse(
+                document.getElementById(
+                    "chart-rows"
+                ).textContent
+            );
+
+            const sheetColumns = JSON.parse(
+                document.getElementById(
+                    "chart-columns"
+                ).textContent
+            );
+
+            const missingValues = JSON.parse(
+                document.getElementById(
+                    "chart-missing-values"
+                ).textContent
+            );
+
+            const chartTextColor = "#cbd5e8";
+
+            const chartGridColor =
+                "rgba(255, 255, 255, 0.07)";
+
+            new Chart(
+                document.getElementById(
+                    "sheetsChart"
+                ),
+                {
+                    type: "bar",
+
+                    data: {
+                        labels: sheetNames,
+
+                        datasets: [
+                            {
+                                label: "عدد الصفوف",
+                                data: sheetRows,
+                                backgroundColor:
+                                    "rgba(75, 124, 255, 0.65)",
+                                borderColor:
+                                    "rgba(117, 160, 255, 1)",
+                                borderWidth: 1
+                            },
+                            {
+                                label: "عدد الأعمدة",
+                                data: sheetColumns,
+                                backgroundColor:
+                                    "rgba(69, 217, 147, 0.55)",
+                                borderColor:
+                                    "rgba(69, 217, 147, 1)",
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: chartTextColor
+                                }
+                            }
+                        },
+
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: chartTextColor
+                                },
+
+                                grid: {
+                                    color: chartGridColor
+                                }
+                            },
+
+                            y: {
+                                beginAtZero: true,
+
+                                ticks: {
+                                    color: chartTextColor
+                                },
+
+                                grid: {
+                                    color: chartGridColor
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+
+            new Chart(
+                document.getElementById(
+                    "missingChart"
+                ),
+                {
+                    type: "doughnut",
+
+                    data: {
+                        labels: sheetNames,
+
+                        datasets: [
+                            {
+                                label: "القيم الفارغة",
+                                data: missingValues,
+                                backgroundColor: [
+                                    "rgba(255, 99, 132, 0.75)",
+                                    "rgba(54, 162, 235, 0.75)",
+                                    "rgba(255, 206, 86, 0.75)",
+                                    "rgba(75, 192, 192, 0.75)",
+                                    "rgba(153, 102, 255, 0.75)",
+                                    "rgba(255, 159, 64, 0.75)",
+                                    "rgba(63, 112, 214, 0.75)",
+                                    "rgba(69, 217, 147, 0.75)"
+                                ],
+
+                                borderColor:
+                                    "rgba(255, 255, 255, 0.25)",
+
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+
+                                labels: {
+                                    color: chartTextColor
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+
+            const numericLabels = JSON.parse(
+                document.getElementById(
+                    "numeric-chart-labels"
+                ).textContent
+            );
+
+            const numericMeans = JSON.parse(
+                document.getElementById(
+                    "numeric-chart-means"
+                ).textContent
+            );
+
+            const numericMaxValues = JSON.parse(
+                document.getElementById(
+                    "numeric-chart-max-values"
+                ).textContent
+            );
+
+            const numericMinValues = JSON.parse(
+                document.getElementById(
+                    "numeric-chart-min-values"
+                ).textContent
+            );
+
+            if (
+                numericLabels.length > 0 &&
+                document.getElementById("meanChart")
+            ) {
+                new Chart(
+                    document.getElementById(
+                        "meanChart"
+                    ),
+                    {
+                        type: "bar",
+
+                        data: {
+                            labels: numericLabels,
+
+                            datasets: [
+                                {
+                                    label: "المتوسط",
+                                    data: numericMeans,
+                                    backgroundColor:
+                                        "rgba(75, 124, 255, 0.65)",
+                                    borderColor:
+                                        "rgba(117, 160, 255, 1)",
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: chartTextColor
+                                    }
+                                }
+                            },
+
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        color: chartTextColor,
+                                        maxRotation: 65,
+                                        minRotation: 35
+                                    },
+
+                                    grid: {
+                                        color: chartGridColor
+                                    }
+                                },
+
+                                y: {
+                                    ticks: {
+                                        color: chartTextColor
+                                    },
+
+                                    grid: {
+                                        color: chartGridColor
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+            }
+
+            if (
+                numericLabels.length > 0 &&
+                document.getElementById("rangeChart")
+            ) {
+                new Chart(
+                    document.getElementById(
+                        "rangeChart"
+                    ),
+                    {
+                        type: "line",
+
+                        data: {
+                            labels: numericLabels,
+
+                            datasets: [
+                                {
+                                    label: "أعلى قيمة",
+                                    data: numericMaxValues,
+                                    borderColor:
+                                        "rgba(69, 217, 147, 1)",
+                                    backgroundColor:
+                                        "rgba(69, 217, 147, 0.15)",
+                                    tension: 0.3
+                                },
+                                {
+                                    label: "أقل قيمة",
+                                    data: numericMinValues,
+                                    borderColor:
+                                        "rgba(255, 92, 111, 1)",
+                                    backgroundColor:
+                                        "rgba(255, 92, 111, 0.15)",
+                                    tension: 0.3
+                                }
+                            ]
+                        },
+
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: chartTextColor
+                                    }
+                                }
+                            },
+
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        color: chartTextColor,
+                                        maxRotation: 65,
+                                        minRotation: 35
+                                    },
+
+                                    grid: {
+                                        color: chartGridColor
+                                    }
+                                },
+
+                                y: {
+                                    ticks: {
+                                        color: chartTextColor
+                                    },
+
+                                    grid: {
+                                        color: chartGridColor
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+            }
+        </script>
+
+    {% endif %}
+
+</body>
+
+</html>

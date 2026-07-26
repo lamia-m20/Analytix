@@ -1,0 +1,401 @@
+<footer id="main-footer">
+    <style>
+        #main-footer {
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+            background:
+                radial-gradient(
+                    circle at 10% 10%,
+                    rgba(38, 79, 167, 0.18),
+                    transparent 34%
+                ),
+                linear-gradient(180deg, #050a14, #02050b);
+            border-top: 1px solid rgba(92, 132, 218, 0.17);
+        }
+
+        #main-footer * {
+            box-sizing: border-box;
+        }
+
+        #main-footer::before {
+            content: "";
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            left: -160px;
+            bottom: -190px;
+            border-radius: 50%;
+            background: rgba(26, 68, 159, 0.15);
+            filter: blur(12px);
+        }
+
+        #main-footer .footer-container {
+            position: relative;
+            z-index: 1;
+            width: min(1200px, 92%);
+            margin: auto;
+            padding: 65px 0 30px;
+        }
+
+        #main-footer .footer-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+            gap: 45px;
+        }
+
+        #main-footer .footer-brand {
+            max-width: 360px;
+        }
+
+        #main-footer .footer-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        #main-footer .footer-logo-icon {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            background: linear-gradient(145deg, #173a7c, #07142c);
+            border: 1px solid rgba(103, 149, 244, 0.35);
+        }
+
+        #main-footer .footer-logo-icon svg {
+            width: 27px;
+            height: 27px;
+        }
+
+        #main-footer .footer-description {
+            margin: 0;
+            color: #8e9bb5;
+            font-size: 14px;
+            line-height: 2;
+        }
+
+        #main-footer .footer-title {
+            position: relative;
+            margin: 5px 0 22px;
+            padding-bottom: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        #main-footer .footer-title::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 35px;
+            height: 2px;
+            border-radius: 10px;
+            background: #376edc;
+        }
+
+        #main-footer .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        #main-footer .footer-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            color: #95a3bd;
+            font-size: 14px;
+            text-decoration: none;
+            transition: 0.25s;
+        }
+
+        #main-footer .footer-links a::before {
+            content: "←";
+            color: #4a7ee5;
+            transition: 0.25s;
+        }
+
+        #main-footer .footer-links a:hover {
+            color: #ffffff;
+            transform: translateX(-4px);
+        }
+
+        #main-footer .contact-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        #main-footer .contact-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            color: #95a3bd;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        #main-footer .contact-icon {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            border-radius: 9px;
+            color: #7ca3ff;
+            background: rgba(44, 83, 165, 0.14);
+            border: 1px solid rgba(88, 132, 223, 0.16);
+        }
+
+        #main-footer .newsletter {
+            margin-top: 22px;
+        }
+
+        #main-footer .newsletter-form {
+            display: flex;
+            padding: 5px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(113, 144, 207, 0.16);
+        }
+
+        #main-footer .newsletter-form input {
+            min-width: 0;
+            flex: 1;
+            padding: 11px 12px;
+            border: 0;
+            outline: 0;
+            color: #ffffff;
+            background: transparent;
+            font-family: inherit;
+        }
+
+        #main-footer .newsletter-form input::placeholder {
+            color: #65728e;
+        }
+
+        #main-footer .newsletter-form button {
+            padding: 10px 15px;
+            border: 0;
+            border-radius: 9px;
+            color: #ffffff;
+            background: linear-gradient(135deg, #1d438c, #3768cb);
+            font-family: inherit;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+
+        #main-footer .newsletter-form button:hover {
+            filter: brightness(1.15);
+        }
+
+        #main-footer .footer-bottom {
+            margin-top: 50px;
+            padding-top: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            border-top: 1px solid rgba(103, 133, 190, 0.13);
+            color: #77839c;
+            font-size: 13px;
+        }
+
+        #main-footer .footer-bottom-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        #main-footer .footer-bottom-links a {
+            color: #77839c;
+            text-decoration: none;
+            transition: 0.25s;
+        }
+
+        #main-footer .footer-bottom-links a:hover {
+            color: #ffffff;
+        }
+
+        @media (max-width: 950px) {
+            #main-footer .footer-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            #main-footer .footer-container {
+                padding-top: 50px;
+            }
+
+            #main-footer .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 35px;
+            }
+
+            #main-footer .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+
+    <div class="footer-container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a href="/" class="footer-logo">
+                    <span class="footer-logo-icon">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M5 3.5H15L19 7.5V20.5H5V3.5Z"
+                                stroke="#FFFFFF"
+                                stroke-width="1.6"
+                            />
+                            <path
+                                d="M15 3.5V7.5H19"
+                                stroke="#FFFFFF"
+                                stroke-width="1.6"
+                            />
+                            <path
+                                d="M8 11H16M8 14.5H16M8 18H13"
+                                stroke="#74A2FF"
+                                stroke-width="1.6"
+                                stroke-linecap="round"
+                            />
+                        </svg>
+                    </span>
+
+                    <span>Analytix</span>
+                </a>
+
+                <p class="footer-description">
+                    منصة متخصصة في تحليل ومعالجة بيانات ملفات Excel،
+                    واكتشاف المشكلات والقيم المفقودة والتكرارات،
+                    وتحويل البيانات إلى تقارير ومؤشرات واضحة تساعدك
+                    في اتخاذ قرارات أفضل.
+                </p>
+
+                <div class="newsletter">
+                    <form
+                        class="newsletter-form"
+                        id="footer-newsletter-form"
+                    >
+                        <input
+                            type="email"
+                            placeholder="البريد الإلكتروني"
+                            aria-label="البريد الإلكتروني"
+                            required
+                        >
+
+                        <button type="submit">
+                            اشتراك
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="footer-title">روابط سريعة</h3>
+
+                <ul class="footer-links">
+                    <li><a href="#home">الرئيسية</a></li>
+                    <li><a href="#features">المميزات</a></li>
+                    <li><a href="#workflow">طريقة الاستخدام</a></li>
+                    <li><a href="#statistics">الإحصائيات</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="footer-title">خدمات المنصة</h3>
+
+                <ul class="footer-links">
+                    <li><a href="/datasets/">رفع ملفات Excel</a></li>
+                    <li><a href="/analysis/">تحليل البيانات</a></li>
+                    <li><a href="/dashboards/">لوحات المعلومات</a></li>
+                    <li><a href="/reports/">تصدير التقارير</a></li>
+                </ul>
+            </div>
+
+            <div id="contact">
+                <h3 class="footer-title">تواصل معنا</h3>
+
+                <div class="contact-list">
+                    <div class="contact-item">
+                        <span class="contact-icon">✉</span>
+                        <span>support@analytix.com</span>
+                    </div>
+
+                    <div class="contact-item">
+                        <span class="contact-icon">⌖</span>
+                        <span>الرياض، المملكة العربية السعودية</span>
+                    </div>
+
+                    <div class="contact-item">
+                        <span class="contact-icon">◷</span>
+                        <span>الأحد إلى الخميس، 9 صباحًا – 5 مساءً</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>
+                جميع الحقوق محفوظة ©
+                <span id="footer-current-year"></span>
+                Analytix
+            </p>
+
+            <div class="footer-bottom-links">
+                <a href="#">سياسة الخصوصية</a>
+                <a href="#">شروط الاستخدام</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const yearElement =
+                document.getElementById("footer-current-year");
+
+            if (yearElement) {
+                yearElement.textContent = new Date().getFullYear();
+            }
+
+            const form =
+                document.getElementById("footer-newsletter-form");
+
+            if (form) {
+                form.addEventListener("submit", function (event) {
+                    event.preventDefault();
+
+                    const button = form.querySelector("button");
+                    button.textContent = "تم الاشتراك ✓";
+                    button.disabled = true;
+
+                    setTimeout(function () {
+                        button.textContent = "اشتراك";
+                        button.disabled = false;
+                        form.reset();
+                    }, 2500);
+                });
+            }
+        })();
+    </script>
+</footer>

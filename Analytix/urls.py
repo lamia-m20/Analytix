@@ -1,23 +1,20 @@
-"""
-URL configuration for Analytix project.
-
-The `urlpatterns` list routes URLs to views.
-"""
-
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 urlpatterns = [
-    # لوحة التحكم
-    path('admin/', admin.site.urls),
+    # لوحة الإدارة
+    path('lamia/', admin.site.urls),
 
     # الصفحة الرئيسية
     path('', include('dashboards.urls')),
 
-    # المستخدمون
+    # الحسابات
     path('accounts/', include('accounts.urls')),
 
-    # ملفات البيانات
+    # رفع وتحليل الملفات
     path('datasets/', include('datasets.urls')),
 
     # التحليلات
@@ -26,3 +23,10 @@ urlpatterns = [
     # التقارير
     path('reports/', include('reports.urls')),
 ]
+
+
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT,
+    )

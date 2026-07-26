@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>إنشاء حساب | Analytix</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: Tahoma, Arial, sans-serif;
+            background:
+                radial-gradient(
+                    circle at top right,
+                    rgba(37, 99, 235, 0.12),
+                    transparent 35%
+                ),
+                linear-gradient(
+                    135deg,
+                    #f8fafc,
+                    #eef4ff
+                );
+
+            color: #1e293b;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        select {
+            font-family: inherit;
+        }
+
+        .page-wrapper {
+            width: 100%;
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(203, 213, 225, 0.8);
+            border-radius: 28px;
+            box-shadow: 0 25px 70px rgba(15, 23, 42, 0.13);
+            overflow: hidden;
+        }
+
+        .register-header {
+            padding: 38px 40px 28px;
+            text-align: center;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(37, 99, 235, 0.08),
+                    rgba(14, 165, 233, 0.04)
+                );
+
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            color: #ffffff;
+            font-size: 25px;
+            font-weight: bold;
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.25);
+        }
+
+        .logo-name {
+            color: #1e3a8a;
+            font-size: 29px;
+            font-weight: 900;
+            letter-spacing: 0.3px;
+        }
+
+        .register-header h1 {
+            margin-bottom: 12px;
+            color: #1e293b;
+            font-size: 34px;
+            font-weight: 900;
+        }
+
+        .register-header p {
+            color: #64748b;
+            font-size: 17px;
+            line-height: 1.8;
+        }
+
+        .register-content {
+            padding: 38px 42px 42px;
+        }
+
+        .register-form {
+            width: 100%;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .form-group label {
+            color: #334155;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .required {
+            color: #ef4444;
+        }
+
+        .form-group input,
+        .form-group select {
+            display: block;
+            width: 100%;
+            height: 54px;
+            padding: 0 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 13px;
+            background: #ffffff;
+            color: #1e293b;
+            font-size: 15px;
+            outline: none;
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        .form-group input:hover,
+        .form-group select:hover {
+            border-color: #94a3b8;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .password-field {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-field input {
+            padding-left: 75px;
+        }
+
+        .show-password {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            transform: translateY(-50%);
+            padding: 7px 10px;
+            border: none;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #2563eb;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .show-password:hover {
+            background: #dbeafe;
+        }
+
+        .company-field {
+            display: none;
+        }
+
+        .company-field.visible {
+            display: flex;
+        }
+
+        .error-message {
+            margin-bottom: 24px;
+            padding: 14px 16px;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            background: #fef2f2;
+            color: #b91c1c;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.7;
+        }
+
+        .terms-box {
+            margin-top: 25px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .terms-box input {
+            width: 18px;
+            height: 18px;
+            margin-top: 3px;
+            accent-color: #2563eb;
+            cursor: pointer;
+        }
+
+        .terms-box a {
+            color: #2563eb;
+            font-weight: 800;
+        }
+
+        .submit-button {
+            width: 100%;
+            min-height: 57px;
+            margin-top: 24px;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 14px 35px rgba(37, 99, 235, 0.25);
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 40px rgba(37, 99, 235, 0.32);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+        .login-link {
+            margin-top: 25px;
+            text-align: center;
+            color: #64748b;
+            font-size: 15px;
+        }
+
+        .login-link a {
+            color: #2563eb;
+            font-weight: 900;
+        }
+
+        .home-link {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .home-link a {
+            color: #475569;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .home-link a:hover,
+        .login-link a:hover,
+        .terms-box a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 760px) {
+            .page-wrapper {
+                padding: 20px 12px;
+                align-items: flex-start;
+            }
+
+            .register-container {
+                border-radius: 20px;
+            }
+
+            .register-header {
+                padding: 30px 20px 24px;
+            }
+
+            .register-header h1 {
+                font-size: 28px;
+            }
+
+            .register-header p {
+                font-size: 15px;
+            }
+
+            .register-content {
+                padding: 28px 20px 32px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .logo-icon {
+                width: 45px;
+                height: 45px;
+            }
+
+            .logo-name {
+                font-size: 25px;
+            }
+
+            .register-header h1 {
+                font-size: 25px;
+            }
+
+            .form-group input,
+            .form-group select {
+                height: 51px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="page-wrapper">
+
+        <section class="register-container">
+
+            <div class="register-header">
+
+                <a href="/" class="logo">
+                    <span class="logo-icon">A</span>
+                    <span class="logo-name">Analytix</span>
+                </a>
+
+                <h1>إنشاء حساب جديد</h1>
+
+                <p>
+                    أدخل بياناتك التالية للانضمام إلى منصة Analytix.
+                </p>
+
+            </div>
+
+            <div class="register-content">
+
+                <form
+                    method="POST"
+                    class="register-form"
+                >
+                    {% csrf_token %}
+
+                    {% if error_message %}
+                        <div class="error-message">
+                            {{ error_message }}
+                        </div>
+                    {% endif %}
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="first_name">
+                                الاسم الأول
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="first_name"
+                                name="first_name"
+                                placeholder="أدخل الاسم الأول"
+                                value="{{ request.POST.first_name }}"
+                                autocomplete="given-name"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="last_name">
+                                اسم العائلة
+                            </label>
+
+                            <input
+                                type="text"
+                                id="last_name"
+                                name="last_name"
+                                placeholder="أدخل اسم العائلة"
+                                value="{{ request.POST.last_name }}"
+                                autocomplete="family-name"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="username">
+                                اسم المستخدم
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                placeholder="اختر اسم المستخدم"
+                                value="{{ request.POST.username }}"
+                                autocomplete="username"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">
+                                البريد الإلكتروني
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                placeholder="example@email.com"
+                                value="{{ request.POST.email }}"
+                                autocomplete="email"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="account_type">
+                                نوع الحساب
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="account_type"
+                                name="account_type"
+                                required
+                            >
+                                <option value="">
+                                    اختر نوع الحساب
+                                </option>
+
+                                <option
+                                    value="individual"
+                                    {% if request.POST.account_type == "individual" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    فرد
+                                </option>
+
+                                <option
+                                    value="company"
+                                    {% if request.POST.account_type == "company" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    شركة أو مؤسسة
+                                </option>
+                            </select>
+                        </div>
+
+                        <div
+                            class="form-group company-field"
+                            id="companyField"
+                        >
+                            <label for="company_name">
+                                اسم الشركة أو المؤسسة
+                            </label>
+
+                            <input
+                                type="text"
+                                id="company_name"
+                                name="company_name"
+                                placeholder="أدخل اسم الشركة أو المؤسسة"
+                                value="{{ request.POST.company_name }}"
+                                autocomplete="organization"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">
+                                رقم الهاتف
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                placeholder="05xxxxxxxx"
+                                value="{{ request.POST.phone }}"
+                                autocomplete="tel"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">
+                                كلمة المرور
+                                <span class="required">*</span>
+                            </label>
+
+                            <div class="password-field">
+
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    placeholder="أدخل كلمة المرور"
+                                    autocomplete="new-password"
+                                    minlength="8"
+                                    required
+                                >
+
+                                <button
+                                    type="button"
+                                    class="show-password"
+                                    onclick="togglePassword('password', this)"
+                                >
+                                    عرض
+                                </button>
+
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password_confirm">
+                                تأكيد كلمة المرور
+                                <span class="required">*</span>
+                            </label>
+
+                            <div class="password-field">
+
+                                <input
+                                    type="password"
+                                    id="password_confirm"
+                                    name="password_confirm"
+                                    placeholder="أعد كتابة كلمة المرور"
+                                    autocomplete="new-password"
+                                    minlength="8"
+                                    required
+                                >
+
+                                <button
+                                    type="button"
+                                    class="show-password"
+                                    onclick="togglePassword(
+                                        'password_confirm',
+                                        this
+                                    )"
+                                >
+                                    عرض
+                                </button>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <label class="terms-box">
+
+                        <input
+                            type="checkbox"
+                            name="terms"
+                            required
+                        >
+
+                        <span>
+                            أوافق على
+                            <a href="#">الشروط والأحكام</a>
+                            و
+                            <a href="#">سياسة الخصوصية</a>.
+                        </span>
+
+                    </label>
+
+                    <button
+                        type="submit"
+                        class="submit-button"
+                    >
+                        إنشاء الحساب
+                    </button>
+
+                </form>
+
+                <div class="login-link">
+                    لديك حساب بالفعل؟
+
+                    <a href="{% url 'accounts:login' %}">
+                        تسجيل الدخول
+                    </a>
+                </div>
+
+                <div class="home-link">
+                    <a href="/">
+                        العودة إلى الصفحة الرئيسية
+                    </a>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+
+            if (input.type === "password") {
+                input.type = "text";
+                button.textContent = "إخفاء";
+            } else {
+                input.type = "password";
+                button.textContent = "عرض";
+            }
+        }
+
+        const accountType = document.getElementById("account_type");
+        const companyField = document.getElementById("companyField");
+        const companyInput = document.getElementById("company_name");
+
+        function updateCompanyField() {
+            if (accountType.value === "company") {
+                companyField.classList.add("visible");
+                companyInput.required = true;
+            } else {
+                companyField.classList.remove("visible");
+                companyInput.required = false;
+                companyInput.value = "";
+            }
+        }
+
+        accountType.addEventListener("change", updateCompanyField);
+
+        updateCompanyField();
+    </script>
+
+</body>
+
+</html>

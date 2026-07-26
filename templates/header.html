@@ -1,0 +1,638 @@
+<header id="main-header">
+    <style>
+        #main-header {
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+            width: 100%;
+            background: rgba(4, 8, 18, 0.94);
+            border-bottom: 1px solid rgba(80, 128, 255, 0.18);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(18px);
+        }
+
+        #main-header * {
+            box-sizing: border-box;
+        }
+
+        #main-header .header-container {
+            width: min(1200px, 92%);
+            min-height: 78px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 25px;
+        }
+
+        /* الشعار */
+
+        #main-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #ffffff;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        #main-header .brand-icon {
+            width: 47px;
+            height: 47px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            background: linear-gradient(
+                145deg,
+                #142c64,
+                #071329
+            );
+            border: 1px solid rgba(101, 151, 255, 0.42);
+            box-shadow:
+                0 8px 22px rgba(17, 64, 151, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        #main-header .brand-icon svg {
+            width: 27px;
+            height: 27px;
+        }
+
+        #main-header .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        #main-header .brand-name {
+            font-size: 21px;
+            font-weight: 900;
+            letter-spacing: 0.2px;
+        }
+
+        #main-header .brand-description {
+            margin-top: 5px;
+            color: #8998b8;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* روابط القائمة */
+
+        #main-header .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        #main-header .nav-links a {
+            position: relative;
+            display: block;
+            padding: 11px 15px;
+            border-radius: 10px;
+            color: #c6d0e6;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.25s ease;
+        }
+
+        #main-header .nav-links a::after {
+            content: "";
+            position: absolute;
+            right: 15px;
+            bottom: 5px;
+            width: 0;
+            height: 2px;
+            border-radius: 10px;
+            background: #4e83ff;
+            transition: width 0.25s ease;
+        }
+
+        #main-header .nav-links a:hover,
+        #main-header .nav-links a.active {
+            color: #ffffff;
+            background: rgba(54, 102, 207, 0.13);
+        }
+
+        #main-header .nav-links a:hover::after,
+        #main-header .nav-links a.active::after {
+            width: calc(100% - 30px);
+        }
+
+        /* أزرار الحساب */
+
+        #main-header .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        #main-header .login-link {
+            padding: 11px 14px;
+            color: #c6d0e6;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.25s;
+        }
+
+        #main-header .login-link:hover {
+            color: #ffffff;
+        }
+
+        #main-header .start-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 18px;
+            border-radius: 11px;
+            color: #ffffff;
+            background: linear-gradient(
+                135deg,
+                #183b83,
+                #315fc1
+            );
+            border: 1px solid rgba(124, 166, 255, 0.36);
+            box-shadow: 0 8px 22px rgba(30, 72, 162, 0.3);
+            font-size: 14px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: 0.25s ease;
+        }
+
+        #main-header .start-button:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(
+                135deg,
+                #234c9d,
+                #3e6fd6
+            );
+            box-shadow: 0 12px 30px rgba(30, 72, 162, 0.43);
+        }
+
+        /* رسالة الترحيب */
+
+        #main-header .user-welcome {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 13px;
+            border: 1px solid rgba(102, 152, 255, 0.22);
+            border-radius: 11px;
+            color: #dce6ff;
+            background: rgba(37, 79, 163, 0.15);
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        #main-header .user-icon {
+            width: 31px;
+            height: 31px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: #ffffff;
+            background: linear-gradient(
+                135deg,
+                #315fc1,
+                #4e83ff
+            );
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        #main-header .username {
+            color: #7fa7ff;
+            font-weight: 900;
+        }
+
+        /* زر تسجيل الخروج */
+
+        #main-header .logout-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 11px 16px;
+            border: 1px solid rgba(255, 104, 104, 0.32);
+            border-radius: 11px;
+            color: #ffffff;
+            background: linear-gradient(
+                135deg,
+                #a51d2d,
+                #d83246
+            );
+            box-shadow: 0 8px 22px rgba(177, 29, 48, 0.22);
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: 0.25s ease;
+        }
+
+        #main-header .logout-button:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(
+                135deg,
+                #bd2538,
+                #eb4255
+            );
+            box-shadow: 0 12px 28px rgba(177, 29, 48, 0.34);
+        }
+
+        /* زر القائمة للجوال */
+
+        #main-header .menu-button {
+            width: 44px;
+            height: 44px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 5px;
+            padding: 0;
+            border-radius: 11px;
+            border: 1px solid rgba(110, 144, 212, 0.25);
+            background: rgba(19, 38, 76, 0.34);
+            cursor: pointer;
+        }
+
+        #main-header .menu-button span {
+            display: block;
+            width: 21px;
+            height: 2px;
+            border-radius: 10px;
+            background: #ffffff;
+            transition: 0.25s;
+        }
+
+        #main-header .menu-button.open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        #main-header .menu-button.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        #main-header .menu-button.open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        /* الشاشات المتوسطة */
+
+        @media (max-width: 1100px) {
+            #main-header .header-container {
+                gap: 15px;
+            }
+
+            #main-header .nav-links a {
+                padding: 11px 10px;
+                font-size: 13px;
+            }
+
+            #main-header .user-welcome {
+                padding: 8px 10px;
+            }
+        }
+
+        @media (max-width: 950px) {
+            #main-header .header-container {
+                min-height: 72px;
+            }
+
+            #main-header .menu-button {
+                display: flex;
+            }
+
+            #main-header .header-actions {
+                margin-right: auto;
+            }
+
+            #main-header .nav-links {
+                position: absolute;
+                top: calc(100% + 1px);
+                right: 4%;
+                left: 4%;
+                display: none;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+                padding: 15px;
+                border-radius: 0 0 17px 17px;
+                background: #060c19;
+                border: 1px solid rgba(89, 127, 204, 0.2);
+                border-top: none;
+                box-shadow: 0 22px 45px rgba(0, 0, 0, 0.45);
+            }
+
+            #main-header .nav-links.open {
+                display: flex;
+            }
+
+            #main-header .nav-links a {
+                padding: 13px 15px;
+            }
+        }
+
+        /* الجوال */
+
+        @media (max-width: 700px) {
+            #main-header .user-welcome {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            #main-header .header-container {
+                width: 94%;
+                gap: 8px;
+            }
+
+            #main-header .brand-description,
+            #main-header .login-link {
+                display: none;
+            }
+
+            #main-header .brand-name {
+                font-size: 18px;
+            }
+
+            #main-header .brand-icon {
+                width: 42px;
+                height: 42px;
+            }
+
+            #main-header .start-button,
+            #main-header .logout-button {
+                padding: 10px 11px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 430px) {
+            #main-header .brand-name {
+                display: none;
+            }
+
+            #main-header .start-button {
+                padding: 10px;
+            }
+
+            #main-header .logout-button span {
+                display: none;
+            }
+        }
+    </style>
+
+    <div class="header-container">
+
+        <!-- الشعار -->
+        <a href="/" class="brand">
+            <span class="brand-icon">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                >
+                    <path
+                        d="M5 3.5H15L19 7.5V20.5H5V3.5Z"
+                        stroke="#FFFFFF"
+                        stroke-width="1.6"
+                    />
+
+                    <path
+                        d="M15 3.5V7.5H19"
+                        stroke="#FFFFFF"
+                        stroke-width="1.6"
+                    />
+
+                    <path
+                        d="M8 11H16M8 14.5H16M8 18H13"
+                        stroke="#6FA0FF"
+                        stroke-width="1.6"
+                        stroke-linecap="round"
+                    />
+                </svg>
+            </span>
+
+            <span class="brand-text">
+                <span class="brand-name">
+                    Analytix
+                </span>
+
+                <span class="brand-description">
+                    تحليل بيانات Excel باحتراف
+                </span>
+            </span>
+        </a>
+
+        <!-- القائمة الرئيسية -->
+        <nav aria-label="القائمة الرئيسية">
+            <ul
+                class="nav-links"
+                id="header-nav-links"
+            >
+                <li>
+                    <a href="/#home" class="active">
+                        الرئيسية
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/#features">
+                        المميزات
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/#workflow">
+                        طريقة الاستخدام
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/#statistics">
+                        الإحصائيات
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/#contact">
+                        تواصل معنا
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- الحساب والأزرار -->
+        <div class="header-actions">
+
+            {% if user.is_authenticated %}
+
+                <!-- رسالة ترحيب من جلسة Django -->
+                <div class="user-welcome">
+                    <span class="user-icon">
+                        {% if user.first_name %}
+                            {{ user.first_name|slice:":1" }}
+                        {% else %}
+                            {{ user.username|slice:":1" }}
+                        {% endif %}
+                    </span>
+
+                    <span>
+                        مرحبًا،
+
+                        <span class="username">
+                            {% if user.first_name %}
+                                {{ user.first_name }}
+                            {% else %}
+                                {{ user.username }}
+                            {% endif %}
+                        </span>
+                    </span>
+                </div>
+
+                <!-- بدء التحليل -->
+                <a
+                    href="/datasets/"
+                    class="start-button"
+                >
+                    <span>ابدأ التحليل</span>
+                    <span>←</span>
+                </a>
+
+                <!-- تسجيل الخروج -->
+                <a
+                    href="{% url 'accounts:logout' %}"
+                    class="logout-button"
+                >
+                    <span>تسجيل الخروج</span>
+                    <strong>↪</strong>
+                </a>
+
+            {% else %}
+
+                <!-- تسجيل الدخول -->
+                <a
+                    href="{% url 'accounts:login' %}"
+                    class="login-link"
+                >
+                    تسجيل الدخول
+                </a>
+
+                <!-- إنشاء حساب -->
+                <a
+                    href="{% url 'accounts:register' %}"
+                    class="start-button"
+                >
+                    <span>إنشاء حساب</span>
+                    <span>←</span>
+                </a>
+
+            {% endif %}
+
+            <!-- زر قائمة الجوال -->
+            <button
+                type="button"
+                class="menu-button"
+                id="header-menu-button"
+                aria-label="فتح القائمة"
+                aria-expanded="false"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const menuButton =
+                document.getElementById(
+                    "header-menu-button"
+                );
+
+            const navLinks =
+                document.getElementById(
+                    "header-nav-links"
+                );
+
+            if (!menuButton || !navLinks) {
+                return;
+            }
+
+            menuButton.addEventListener(
+                "click",
+                function () {
+                    const isOpen =
+                        navLinks.classList.toggle(
+                            "open"
+                        );
+
+                    menuButton.classList.toggle(
+                        "open",
+                        isOpen
+                    );
+
+                    menuButton.setAttribute(
+                        "aria-expanded",
+                        isOpen ? "true" : "false"
+                    );
+                }
+            );
+
+            navLinks
+                .querySelectorAll("a")
+                .forEach(function (link) {
+                    link.addEventListener(
+                        "click",
+                        function () {
+                            navLinks.classList.remove(
+                                "open"
+                            );
+
+                            menuButton.classList.remove(
+                                "open"
+                            );
+
+                            menuButton.setAttribute(
+                                "aria-expanded",
+                                "false"
+                            );
+                        }
+                    );
+                });
+
+            window.addEventListener(
+                "resize",
+                function () {
+                    if (window.innerWidth > 950) {
+                        navLinks.classList.remove(
+                            "open"
+                        );
+
+                        menuButton.classList.remove(
+                            "open"
+                        );
+
+                        menuButton.setAttribute(
+                            "aria-expanded",
+                            "false"
+                        );
+                    }
+                }
+            );
+        })();
+    </script>
+</header>
