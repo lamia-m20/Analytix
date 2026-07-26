@@ -79,15 +79,31 @@ DEBUG = get_boolean_env(
 
 ALLOWED_HOSTS = get_list_env(
     'ALLOWED_HOSTS',
-    '127.0.0.1,localhost',
+    '127.0.0.1,localhost,analytix-cc2w.onrender.com',
 )
 
 
 # النطاقات الموثوقة لطلبات CSRF
 CSRF_TRUSTED_ORIGINS = get_list_env(
     'CSRF_TRUSTED_ORIGINS',
-    '',
+    'https://analytix-cc2w.onrender.com',
 )
+
+
+# Render provides the deployed hostname through this environment variable.
+RENDER_EXTERNAL_HOSTNAME = os.getenv(
+    'RENDER_EXTERNAL_HOSTNAME',
+    '',
+).strip()
+
+if RENDER_EXTERNAL_HOSTNAME:
+    if RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+    render_origin = f'https://{RENDER_EXTERNAL_HOSTNAME}'
+
+    if render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(render_origin)
 
 
 # ==========================================
