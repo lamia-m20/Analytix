@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
 
@@ -85,6 +86,50 @@ def login_view(request):
             'error_message': error_message,
         },
     )
+
+
+def password_reset_request_view(request):
+    if request.method != 'POST':
+        return redirect('accounts:login')
+
+    username = request.POST.get('username', '').strip()
+
+    if not username:
+        return render(
+            request,
+            'accounts-templates/login.html',
+            {
+                'error_message': (
+                    'أدخل اسم المستخدم أولًا ثم اضغط '
+                    'على نسيت كلمة المرور.'
+                ),
+            },
+        )
+
+    user = User.objects.filter(
+        username__iexact=username,
+        is_active=True,
+    ).first()
+
+    # لا نكشف للزائر ما إذا كان اسم المستخدم أو البريد مسجلًا.
+    if user and user.email:
+        reset_form = PasswordResetForm(
+            {'email': user.email},
+        )
+
+        if reset_form.is_valid():
+            reset_form.save(
+                request=request,
+                use_https=request.is_secure(),
+                email_template_name=(
+                    'accounts-templates/password_reset_email.txt'
+                ),
+                subject_template_name=(
+                    'accounts-templates/password_reset_subject.txt'
+                ),
+            )
+
+    return redirect('accounts:password_reset_done')
 
 
 def logout_view(request):

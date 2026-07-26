@@ -48,6 +48,7 @@ def get_list_env(name, default=''):
     تحويل قيمة مفصولة بفواصل إلى قائمة.
 
     مثال:
+
     ALLOWED_HOSTS=localhost,127.0.0.1,example.com
     """
 
@@ -79,31 +80,48 @@ DEBUG = get_boolean_env(
 
 ALLOWED_HOSTS = get_list_env(
     'ALLOWED_HOSTS',
-    '127.0.0.1,localhost,analytix-cc2w.onrender.com',
+    (
+        '127.0.0.1,'
+        'localhost,'
+        'analytix-cc2w.onrender.com'
+    ),
 )
 
 
+# ==========================================
 # النطاقات الموثوقة لطلبات CSRF
+# ==========================================
+
 CSRF_TRUSTED_ORIGINS = get_list_env(
     'CSRF_TRUSTED_ORIGINS',
     'https://analytix-cc2w.onrender.com',
 )
 
 
-# Render provides the deployed hostname through this environment variable.
+# ==========================================
+# إعدادات Render
+# ==========================================
+
 RENDER_EXTERNAL_HOSTNAME = os.getenv(
     'RENDER_EXTERNAL_HOSTNAME',
     '',
 ).strip()
 
+
 if RENDER_EXTERNAL_HOSTNAME:
     if RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+        ALLOWED_HOSTS.append(
+            RENDER_EXTERNAL_HOSTNAME
+        )
 
-    render_origin = f'https://{RENDER_EXTERNAL_HOSTNAME}'
+    render_origin = (
+        f'https://{RENDER_EXTERNAL_HOSTNAME}'
+    )
 
     if render_origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(render_origin)
+        CSRF_TRUSTED_ORIGINS.append(
+            render_origin
+        )
 
 
 # ==========================================
@@ -118,6 +136,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # تطبيقات Cloudinary
+    'cloudinary_storage',
+    'cloudinary',
 
     # تطبيقات المشروع
     'accounts.apps.AccountsConfig',
@@ -208,8 +230,12 @@ WSGI_APPLICATION = 'Analytix.wsgi.application'
 # ==========================================
 
 # القيم المدعومة:
-# sqlite   = قاعدة بيانات التطوير
-# postgres = قاعدة بيانات الإنتاج على Render
+#
+# sqlite:
+# تستخدم في التطوير المحلي.
+#
+# postgres:
+# تستخدم في الإنتاج على Render.
 
 DATABASE_ENGINE = os.getenv(
     'DATABASE_ENGINE',
@@ -218,7 +244,6 @@ DATABASE_ENGINE = os.getenv(
 
 
 if DATABASE_ENGINE == 'postgres':
-
     DATABASES = {
         'default': {
             'ENGINE': (
@@ -242,7 +267,7 @@ if DATABASE_ENGINE == 'postgres':
 
             'HOST': os.getenv(
                 'POSTGRES_HOST',
-                'dpg-d9iu2r71dkcs73bgc3hg-a',
+                '',
             ),
 
             'PORT': os.getenv(
@@ -250,8 +275,6 @@ if DATABASE_ENGINE == 'postgres':
                 '5432',
             ),
 
-            # الاحتفاظ باتصالات قاعدة البيانات
-            # لتحسين الأداء في الإنتاج
             'CONN_MAX_AGE': int(
                 os.getenv(
                     'DATABASE_CONN_MAX_AGE',
@@ -267,11 +290,10 @@ if DATABASE_ENGINE == 'postgres':
                     )
                 ),
             },
-        }
+        },
     }
 
 else:
-
     DATABASES = {
         'default': {
             'ENGINE': (
@@ -285,7 +307,7 @@ else:
                     'db.sqlite3',
                 )
             ),
-        }
+        },
     }
 
 
@@ -300,18 +322,21 @@ AUTH_PASSWORD_VALIDATORS = [
             'UserAttributeSimilarityValidator'
         ),
     },
+
     {
         'NAME': (
             'django.contrib.auth.password_validation.'
             'MinimumLengthValidator'
         ),
     },
+
     {
         'NAME': (
             'django.contrib.auth.password_validation.'
             'CommonPasswordValidator'
         ),
     },
+
     {
         'NAME': (
             'django.contrib.auth.password_validation.'
@@ -335,6 +360,55 @@ USE_TZ = True
 
 
 # ==========================================
+# إعدادات Cloudinary
+# ==========================================
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv(
+        'CLOUDINARY_CLOUD_NAME',
+        '',
+    ),
+
+    'API_KEY': os.getenv(
+        'CLOUDINARY_API_KEY',
+        '',
+    ),
+
+    'API_SECRET': os.getenv(
+        'CLOUDINARY_API_SECRET',
+        '',
+    ),
+
+    # إنشاء روابط HTTPS
+    'SECURE': True,
+}
+
+
+# ==========================================
+# أنظمة تخزين الملفات
+# ==========================================
+
+STORAGES = {
+    # تخزين ملفات Excel وملفات النتائج
+    # في Cloudinary بصيغة Raw.
+    'default': {
+        'BACKEND': (
+            'cloudinary_storage.storage.'
+            'RawMediaCloudinaryStorage'
+        ),
+    },
+
+    # تخزين ملفات static الخاصة بالتصميم.
+    'staticfiles': {
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.'
+            'StaticFilesStorage'
+        ),
+    },
+}
+
+
+# ==========================================
 # إعدادات الملفات الثابتة Static Files
 # ==========================================
 
@@ -353,7 +427,30 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 
+# يستخدم هذا المسار أثناء التطوير المحلي
+# وبعض العمليات المؤقتة.
+#
+# التخزين الافتراضي للملفات المرفوعة هو Cloudinary.
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# ==========================================
+# حدود رفع الملفات
+# ==========================================
+
+# الملفات الأكبر من 2 ميجابايت لا تبقى كاملة
+# داخل ذاكرة السيرفر، بل تحفظ مؤقتًا على القرص.
+FILE_UPLOAD_MAX_MEMORY_SIZE = (
+    2 * 1024 * 1024
+)
+
+# الحد الأعلى لحجم بيانات طلب HTTP كاملًا.
+#
+# الحد هنا 12 ميجابايت لإتاحة رفع ملف حجمه
+# 10 ميجابايت مع بيانات النموذج الإضافية.
+DATA_UPLOAD_MAX_MEMORY_SIZE = (
+    12 * 1024 * 1024
+)
 
 
 # ==========================================
@@ -368,10 +465,37 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 
 
 # ==========================================
-# إعدادات الأمان الخاصة بالإنتاج
+# إعدادات البريد الإلكتروني واستعادة المرور
 # ==========================================
 
-# تعمل هذه الإعدادات عندما يكون DEBUG=False
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    (
+        'django.core.mail.backends.console.EmailBackend'
+        if DEBUG
+        else 'django.core.mail.backends.smtp.EmailBackend'
+    ),
+)
+
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = ''.join(
+    os.getenv('EMAIL_HOST_PASSWORD', '').split()
+)
+EMAIL_USE_TLS = get_boolean_env('EMAIL_USE_TLS', True)
+DEFAULT_FROM_EMAIL = os.getenv(
+    'DEFAULT_FROM_EMAIL',
+    EMAIL_HOST_USER or 'Analytix <no-reply@analytix.local>',
+)
+
+# رابط استعادة كلمة المرور صالح لمدة ساعة.
+PASSWORD_RESET_TIMEOUT = 60 * 60
+
+
+# ==========================================
+# إعدادات الأمان الخاصة بالإنتاج
+# ==========================================
 
 SECURE_SSL_REDIRECT = get_boolean_env(
     'SECURE_SSL_REDIRECT',
@@ -395,9 +519,11 @@ SECURE_HSTS_SECONDS = int(
     )
 )
 
-SECURE_HSTS_INCLUDE_SUBDOMAINS = get_boolean_env(
-    'SECURE_HSTS_INCLUDE_SUBDOMAINS',
-    False,
+SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+    get_boolean_env(
+        'SECURE_HSTS_INCLUDE_SUBDOMAINS',
+        False,
+    )
 )
 
 SECURE_HSTS_PRELOAD = get_boolean_env(
@@ -406,7 +532,8 @@ SECURE_HSTS_PRELOAD = get_boolean_env(
 )
 
 
-# Render يرسل البروتوكول الحقيقي في هذا الرأس
+# Render يرسل نوع البروتوكول الحقيقي
+# من خلال هذا الرأس.
 SECURE_PROXY_SSL_HEADER = (
     'HTTP_X_FORWARDED_PROTO',
     'https',
@@ -414,7 +541,7 @@ SECURE_PROXY_SSL_HEADER = (
 
 
 # ==========================================
-# إعدادات الجلسات
+# إعدادات الجلسات والحماية
 # ==========================================
 
 SESSION_COOKIE_HTTPONLY = True

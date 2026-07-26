@@ -8,11 +8,10 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'account_type',
-        'company_name',
-        'phone',
-        'is_verified',
+        'max_file_size_mb',
         'monthly_analysis_limit',
         'analyses_used_this_month',
+        'is_verified',
         'created_at',
     )
 
@@ -34,48 +33,4 @@ class UserProfileAdmin(admin.ModelAdmin):
     readonly_fields = (
         'created_at',
         'updated_at',
-        'remaining_analyses',
-    )
-
-    fieldsets = (
-        (
-            'بيانات المستخدم',
-            {
-                'fields': (
-                    'user',
-                    'account_type',
-                    'company_name',
-                    'phone',
-                    'profile_image',
-                )
-            },
-        ),
-        (
-            'حدود الاستخدام',
-            {
-                'fields': (
-                    'max_file_size_mb',
-                    'monthly_analysis_limit',
-                    'analyses_used_this_month',
-                    'remaining_analyses',
-                )
-            },
-        ),
-        (
-            'حالة الحساب',
-            {
-                'fields': (
-                    'is_verified',
-                )
-            },
-        ),
-        (
-            'التواريخ',
-            {
-                'fields': (
-                    'created_at',
-                    'updated_at',
-                )
-            },
-        ),
     )

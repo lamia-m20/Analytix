@@ -1,7 +1,15 @@
+from cloudinary_storage.storage import (
+    RawMediaCloudinaryStorage,
+)
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
-from datasets.models import Dataset, DatasetSheet
+from datasets.models import Dataset
+from datasets.models import DatasetSheet
+
+
+raw_storage = RawMediaCloudinaryStorage()
 
 
 class AnalysisJob(models.Model):
@@ -102,13 +110,56 @@ class AnalysisJob(models.Model):
         verbose_name = 'عملية تحليل'
         verbose_name_plural = 'عمليات التحليل'
         ordering = ['-created_at']
+
         indexes = [
-            models.Index(fields=['owner', 'status']),
-            models.Index(fields=['analysis_type']),
+            models.Index(
+                fields=[
+                    'owner',
+                    'status',
+                ],
+            ),
+            models.Index(
+                fields=[
+                    'analysis_type',
+                ],
+            ),
         ]
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+
+        if (
+            self.dataset_id
+            and self.owner_id
+            and self.dataset.user_id
+            != self.owner_id
+        ):
+            raise ValidationError(
+                {
+                    'dataset': (
+                        'ملف البيانات لا يخص '
+                        'هذا المستخدم.'
+                    ),
+                }
+            )
+
+        if (
+            self.sheet_id
+            and self.dataset_id
+            and self.sheet.dataset_id
+            != self.dataset_id
+        ):
+            raise ValidationError(
+                {
+                    'sheet': (
+                        'ورقة العمل لا تنتمي '
+                        'إلى ملف البيانات المحدد.'
+                    ),
+                }
+            )
 
 
 class AnalysisConfiguration(models.Model):
@@ -210,7 +261,10 @@ class AnalysisConfiguration(models.Model):
         verbose_name_plural = 'إعدادات التحليلات'
 
     def __str__(self):
-        return f'إعدادات: {self.analysis_job.name}'
+        return (
+            f'إعدادات: '
+            f'{self.analysis_job.name}'
+        )
 
 
 class DataCleaningOperation(models.Model):
@@ -329,6 +383,7 @@ class AnalysisResult(models.Model):
 
     processed_file = models.FileField(
         upload_to='analysis/processed/%Y/%m/',
+        storage=raw_storage,
         blank=True,
         null=True,
         verbose_name='الملف المعالج',
@@ -355,4 +410,7 @@ class AnalysisResult(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'نتيجة: {self.analysis_job.name}'
+        return (
+            f'نتيجة: '
+            f'{self.analysis_job.name}'
+        )

@@ -87,4 +87,5 @@ class UserProfile(models.Model):
             self.monthly_analysis_limit
             - self.analyses_used_this_month
         )
+
         return max(remaining, 0)

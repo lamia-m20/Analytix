@@ -1,40 +1,70 @@
 from pathlib import Path
 
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
+
+
+raw_storage = RawMediaCloudinaryStorage()
+
+
+def validate_excel_size(uploaded_file):
+    """
+    حد احتياطي عام للملفات.
+
+    الحد الخاص بكل مستخدم يتم التحقق منه
+    داخل DatasetUploadForm.
+    """
+
+    default_limit_mb = 10
+    maximum_bytes = default_limit_mb * 1024 * 1024
+
+    if not uploaded_file:
+        return
+
+    if uploaded_file.size > maximum_bytes:
+        raise ValidationError(
+            f'حجم الملف أكبر من الحد العام المسموح، '
+            f'وهو {default_limit_mb} ميجابايت.'
+        )
 
 
 class Dataset(models.Model):
     STATUS_CHOICES = [
         ('uploaded', 'تم الرفع'),
-        ('validating', 'جارٍ التحقق'),
-        ('ready', 'جاهز'),
-        ('processing', 'قيد المعالجة'),
-        ('processed', 'تمت المعالجة'),
-        ('failed', 'فشل'),
+        ('reading', 'جارٍ قراءة الملف'),
+        ('ready', 'جاهز للتحليل'),
+        ('failed', 'فشل تجهيز الملف'),
     ]
 
-    owner = models.ForeignKey(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='datasets',
-        verbose_name='صاحب الملف',
+        verbose_name='المستخدم',
     )
 
-    name = models.CharField(
-        max_length=255,
-        verbose_name='اسم مجموعة البيانات',
+    title = models.CharField(
+        max_length=200,
+        verbose_name='اسم ملف البيانات',
     )
 
-    original_file = models.FileField(
-        upload_to='datasets/original/%Y/%m/',
+    file = models.FileField(
+        upload_to='analytix/excel_files/%Y/%m/',
+        storage=raw_storage,
         validators=[
             FileExtensionValidator(
-                allowed_extensions=['xlsx', 'xls']
-            )
+                allowed_extensions=[
+                    'xlsx',
+                    'xls',
+                    'xlsm',
+                ],
+            ),
+            validate_excel_size,
         ],
-        verbose_name='ملف Excel الأصلي',
+        verbose_name='ملف Excel',
     )
 
     original_filename = models.CharField(
@@ -45,13 +75,8 @@ class Dataset(models.Model):
 
     file_size = models.PositiveBigIntegerField(
         default=0,
+        editable=False,
         verbose_name='حجم الملف بالبايت',
-    )
-
-    file_extension = models.CharField(
-        max_length=10,
-        blank=True,
-        verbose_name='امتداد الملف',
     )
 
     status = models.CharField(
@@ -62,25 +87,9 @@ class Dataset(models.Model):
         verbose_name='حالة الملف',
     )
 
-    sheets_count = models.PositiveIntegerField(
-        default=0,
-        verbose_name='عدد أوراق العمل',
-    )
-
-    selected_sheet_name = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name='ورقة العمل المحددة',
-    )
-
     error_message = models.TextField(
         blank=True,
         verbose_name='رسالة الخطأ',
-    )
-
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name='نشط',
     )
 
     uploaded_at = models.DateTimeField(
@@ -93,41 +102,47 @@ class Dataset(models.Model):
         verbose_name='تاريخ آخر تحديث',
     )
 
-    processed_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        verbose_name='تاريخ اكتمال المعالجة',
-    )
-
     class Meta:
         verbose_name = 'ملف بيانات'
         verbose_name_plural = 'ملفات البيانات'
         ordering = ['-uploaded_at']
+
         indexes = [
-            models.Index(fields=['owner', 'status']),
-            models.Index(fields=['uploaded_at']),
+            models.Index(
+                fields=['user', 'status'],
+            ),
+            models.Index(
+                fields=['uploaded_at'],
+            ),
         ]
 
     def __str__(self):
-        return self.name
+        return self.title
 
     def save(self, *args, **kwargs):
-        if self.original_file:
-            if not self.original_filename:
-                self.original_filename = Path(
-                    self.original_file.name
-                ).name
+        if self.file and not self.original_filename:
+            self.original_filename = Path(
+                self.file.name
+            ).name
 
-            self.file_extension = Path(
-                self.original_file.name
-            ).suffix.lower().replace('.', '')
-
-            try:
-                self.file_size = self.original_file.size
-            except (AttributeError, OSError):
-                pass
+        if (
+            self.file
+            and not getattr(
+                self.file,
+                '_committed',
+                True,
+            )
+        ):
+            self.file_size = self.file.size
 
         super().save(*args, **kwargs)
+
+    @property
+    def file_size_mb(self):
+        return round(
+            self.file_size / (1024 * 1024),
+            2,
+        )
 
 
 class DatasetSheet(models.Model):
@@ -143,40 +158,24 @@ class DatasetSheet(models.Model):
         verbose_name='اسم ورقة العمل',
     )
 
-    sheet_index = models.PositiveIntegerField(
+    index = models.PositiveIntegerField(
         default=0,
         verbose_name='ترتيب ورقة العمل',
     )
 
-    rows_count = models.PositiveBigIntegerField(
+    row_count = models.PositiveBigIntegerField(
         default=0,
         verbose_name='عدد الصفوف',
     )
 
-    columns_count = models.PositiveIntegerField(
+    column_count = models.PositiveIntegerField(
         default=0,
         verbose_name='عدد الأعمدة',
     )
 
-    empty_cells_count = models.PositiveBigIntegerField(
-        default=0,
-        verbose_name='عدد الخلايا الفارغة',
-    )
-
-    duplicate_rows_count = models.PositiveBigIntegerField(
-        default=0,
-        verbose_name='عدد الصفوف المكررة',
-    )
-
-    preview_data = models.JSONField(
-        default=list,
-        blank=True,
-        verbose_name='معاينة البيانات',
-    )
-
-    is_selected = models.BooleanField(
-        default=False,
-        verbose_name='ورقة العمل محددة',
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='مفعلة',
     )
 
     created_at = models.DateTimeField(
@@ -187,30 +186,26 @@ class DatasetSheet(models.Model):
     class Meta:
         verbose_name = 'ورقة عمل'
         verbose_name_plural = 'أوراق العمل'
-        ordering = ['sheet_index']
+        ordering = ['index']
+
         constraints = [
             models.UniqueConstraint(
-                fields=['dataset', 'name'],
+                fields=[
+                    'dataset',
+                    'name',
+                ],
                 name='unique_sheet_name_per_dataset',
-            )
+            ),
         ]
 
     def __str__(self):
-        return f'{self.dataset.name} - {self.name}'
+        return (
+            f'{self.dataset.title} - '
+            f'{self.name}'
+        )
 
 
 class DatasetColumn(models.Model):
-    DATA_TYPE_CHOICES = [
-        ('text', 'نص'),
-        ('integer', 'عدد صحيح'),
-        ('float', 'عدد عشري'),
-        ('boolean', 'قيمة منطقية'),
-        ('date', 'تاريخ'),
-        ('datetime', 'تاريخ ووقت'),
-        ('category', 'تصنيف'),
-        ('unknown', 'غير معروف'),
-    ]
-
     sheet = models.ForeignKey(
         DatasetSheet,
         on_delete=models.CASCADE,
@@ -223,90 +218,50 @@ class DatasetColumn(models.Model):
         verbose_name='اسم العمود',
     )
 
-    original_name = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name='اسم العمود الأصلي',
-    )
-
-    column_index = models.PositiveIntegerField(
+    position = models.PositiveIntegerField(
         default=0,
         verbose_name='ترتيب العمود',
     )
 
-    detected_type = models.CharField(
-        max_length=20,
-        choices=DATA_TYPE_CHOICES,
-        default='unknown',
-        verbose_name='نوع البيانات المكتشف',
+    data_type = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='نوع البيانات',
     )
 
-    missing_values_count = models.PositiveBigIntegerField(
+    null_count = models.PositiveBigIntegerField(
         default=0,
         verbose_name='عدد القيم الفارغة',
     )
 
-    unique_values_count = models.PositiveBigIntegerField(
+    unique_count = models.PositiveBigIntegerField(
         default=0,
         verbose_name='عدد القيم الفريدة',
-    )
-
-    minimum_value = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name='أقل قيمة',
-    )
-
-    maximum_value = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name='أعلى قيمة',
-    )
-
-    mean_value = models.FloatField(
-        blank=True,
-        null=True,
-        verbose_name='المتوسط',
-    )
-
-    median_value = models.FloatField(
-        blank=True,
-        null=True,
-        verbose_name='الوسيط',
-    )
-
-    standard_deviation = models.FloatField(
-        blank=True,
-        null=True,
-        verbose_name='الانحراف المعياري',
     )
 
     sample_values = models.JSONField(
         default=list,
         blank=True,
-        verbose_name='عينات من القيم',
-    )
-
-    is_numeric = models.BooleanField(
-        default=False,
-        verbose_name='عمود رقمي',
-    )
-
-    is_date = models.BooleanField(
-        default=False,
-        verbose_name='عمود تاريخ',
+        verbose_name='قيم نموذجية',
     )
 
     class Meta:
         verbose_name = 'عمود بيانات'
         verbose_name_plural = 'أعمدة البيانات'
-        ordering = ['column_index']
+        ordering = ['position']
+
         constraints = [
             models.UniqueConstraint(
-                fields=['sheet', 'name'],
-                name='unique_column_name_per_sheet',
-            )
+                fields=[
+                    'sheet',
+                    'position',
+                ],
+                name='unique_column_position_per_sheet',
+            ),
         ]
 
     def __str__(self):
-        return f'{self.sheet.name} - {self.name}'
+        return (
+            f'{self.sheet.name} - '
+            f'{self.name}'
+        )

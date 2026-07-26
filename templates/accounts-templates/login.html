@@ -329,8 +329,13 @@
         }
 
         .forgot-link {
+            padding: 0;
+            border: 0;
             color: var(--primary);
+            background: transparent;
+            font: inherit;
             font-weight: bold;
+            cursor: pointer;
         }
 
         .submit-button {
@@ -485,6 +490,16 @@
                         {% endfor %}
                     {% endif %}
 
+                    {% if error_message %}
+                        <div
+                            class="general-errors"
+                            role="alert"
+                            aria-live="assertive"
+                        >
+                            {{ error_message }}
+                        </div>
+                    {% endif %}
+
                     {% if form.non_field_errors %}
                         <div class="general-errors">
                             {{ form.non_field_errors }}
@@ -518,6 +533,7 @@
     class="form-input"
     placeholder="أدخل اسم المستخدم"
     autocomplete="username"
+    value="{{ request.POST.username|default:'' }}"
     required
 >
                             {% if form.username.errors %}
@@ -569,9 +585,15 @@
                                 <span>تذكر اسم المستخدم</span>
                             </label>
 
-                            <a href="#" class="forgot-link">
+                            <button
+                                type="submit"
+                                class="forgot-link"
+                                formaction="{% url 'accounts:password_reset' %}"
+                                formmethod="post"
+                                formnovalidate
+                            >
                                 نسيت كلمة المرور؟
-                            </a>
+                            </button>
 
                         </div>
 
