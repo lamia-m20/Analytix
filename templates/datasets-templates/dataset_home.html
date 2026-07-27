@@ -35,7 +35,8 @@
         }
 
         button,
-        input {
+        input,
+        textarea {
             font-family: inherit;
         }
 
@@ -201,6 +202,64 @@
             margin-bottom: 22px;
             color: #82a9ff;
             font-size: 25px;
+        }
+
+        .dashboard-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .dashboard-heading .section-title {
+            margin-bottom: 0;
+        }
+
+        .edit-dashboard-button,
+        .submit-request-button {
+            padding: 11px 20px;
+            border: 1px solid rgba(126, 168, 255, 0.38);
+            border-radius: 10px;
+            color: #ffffff;
+            background: #244f9f;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .dashboard-edit-form {
+            padding: 20px;
+            margin-bottom: 22px;
+            border: 1px solid rgba(99, 145, 241, 0.2);
+            border-radius: 14px;
+            background: rgba(8, 19, 36, 0.72);
+        }
+
+        .dashboard-edit-form label {
+            display: block;
+            margin-bottom: 10px;
+            color: #d7e3fb;
+            font-weight: bold;
+        }
+
+        .dashboard-edit-form textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 14px;
+            margin-bottom: 14px;
+            resize: vertical;
+            border: 1px solid rgba(106, 151, 244, 0.35);
+            border-radius: 10px;
+            outline: none;
+            color: #ffffff;
+            background: #0a172b;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .dashboard-edit-form textarea:focus {
+            border-color: #75a0ff;
         }
 
         .summary-grid {
@@ -413,6 +472,11 @@
                 flex-direction: column;
             }
 
+            .dashboard-heading {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
@@ -447,6 +511,12 @@
             </strong>
         </div>
 
+        {% for message in messages %}
+            <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+
         {% if error_message %}
             <div class="error-message">
                 {{ error_message }}
@@ -467,9 +537,16 @@
             <form
                 method="POST"
                 enctype="multipart/form-data"
+                action="{% url 'datasets:upload' %}"
                 id="excel-form"
             >
                 {% csrf_token %}
+
+                <input
+                    type="hidden"
+                    name="title"
+                    id="dataset-title"
+                >
 
                 <div
                     class="upload-box"
@@ -490,7 +567,7 @@
 
                     <input
                         type="file"
-                        name="excel_file"
+                        name="file"
                         id="excel-file"
                         accept=".xlsx,.xls,.xlsm"
                         required
@@ -583,36 +660,85 @@
             </section>
 
             <section class="dashboard-card">
-                <h2 class="section-title">
-                    لوحة المعلومات
-                </h2>
+                <div class="dashboard-heading">
+                    <h2 class="section-title">
+                        لوحة المعلومات
+                    </h2>
+
+                    {% if dataset %}
+                        <button
+                            type="button"
+                            class="edit-dashboard-button"
+                            id="edit-dashboard-button"
+                            aria-expanded="false"
+                            aria-controls="dashboard-edit-form"
+                        >
+                            تعديل الداشبورد
+                        </button>
+                    {% endif %}
+                </div>
+
+                {% if dataset %}
+                    <form
+                        method="POST"
+                        action="{% url 'datasets:edit_dashboard' dataset.pk %}"
+                        class="dashboard-edit-form"
+                        id="dashboard-edit-form"
+                        hidden
+                    >
+                        {% csrf_token %}
+
+                        <label for="dashboard-request">
+                            اكتب التعديل المطلوب
+                        </label>
+
+                        <textarea
+                            name="dashboard_request"
+                            id="dashboard-request"
+                            maxlength="2000"
+                            placeholder="مثال: أضف مخططًا للمبيعات حسب الشهر"
+                            required
+                        ></textarea>
+
+                        <button
+                            type="submit"
+                            class="submit-request-button"
+                        >
+                            تنفيذ الطلب
+                        </button>
+                    </form>
+                {% endif %}
 
                 <div class="dashboard-grid">
 
-                    <div class="chart-box">
-                        <h3>
-                            عدد الصفوف والأعمدة في كل ورقة
-                        </h3>
-
-                        <div class="chart-container">
-                            <canvas id="sheetsChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-box">
-                        <h3>
-                            القيم الفارغة في كل ورقة
-                        </h3>
-
-                        <div class="chart-container">
-                            <canvas id="missingChart"></canvas>
-                        </div>
-                    </div>
-
-                    {% if numeric_chart_labels %}
+                    {% if sheet_dimensions_widget %}
                         <div class="chart-box">
                             <h3>
-                                متوسط الأعمدة الرقمية
+                                {{ sheet_dimensions_widget.title }}
+                            </h3>
+
+                            <div class="chart-container">
+                                <canvas id="sheetsChart"></canvas>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if missing_values_widget %}
+                        <div class="chart-box">
+                            <h3>
+                                {{ missing_values_widget.title }}
+                            </h3>
+
+                            <div class="chart-container">
+                                <canvas id="missingChart"></canvas>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if numeric_chart_labels and numeric_means_widget %}
+                        <div class="chart-box">
+                            <h3>
+                                {{ numeric_means_widget.title }}
                             </h3>
 
                             <div class="chart-container">
@@ -620,9 +746,12 @@
                             </div>
                         </div>
 
+                    {% endif %}
+
+                    {% if numeric_chart_labels and numeric_ranges_widget %}
                         <div class="chart-box">
                             <h3>
-                                أعلى وأقل القيم الرقمية
+                                {{ numeric_ranges_widget.title }}
                             </h3>
 
                             <div class="chart-container">
@@ -880,6 +1009,43 @@
 
     <script>
         (function () {
+            const editDashboardButton =
+                document.getElementById(
+                    "edit-dashboard-button"
+                );
+
+            const dashboardEditForm =
+                document.getElementById(
+                    "dashboard-edit-form"
+                );
+
+            if (
+                editDashboardButton &&
+                dashboardEditForm
+            ) {
+                editDashboardButton.addEventListener(
+                    "click",
+                    function () {
+                        const willOpen =
+                            dashboardEditForm.hidden;
+
+                        dashboardEditForm.hidden =
+                            !willOpen;
+
+                        editDashboardButton.setAttribute(
+                            "aria-expanded",
+                            String(willOpen)
+                        );
+
+                        if (willOpen) {
+                            document.getElementById(
+                                "dashboard-request"
+                            ).focus();
+                        }
+                    }
+                );
+            }
+
             const form =
                 document.getElementById("excel-form");
 
@@ -888,6 +1054,9 @@
 
             const selectedFile =
                 document.getElementById("selected-file");
+
+            const datasetTitle =
+                document.getElementById("dataset-title");
 
             const analyzeButton =
                 document.getElementById("analyze-button");
@@ -918,11 +1087,24 @@
 
                         selectedFile.style.display =
                             "block";
+
+                        if (datasetTitle) {
+                            datasetTitle.value =
+                                fileInput.files[0].name
+                                    .replace(
+                                        /\.[^/.]+$/,
+                                        ""
+                                    );
+                        }
                     } else {
                         selectedFile.textContent = "";
 
                         selectedFile.style.display =
                             "none";
+
+                        if (datasetTitle) {
+                            datasetTitle.value = "";
+                        }
                     }
                 }
             );
@@ -1012,12 +1194,14 @@
             const chartGridColor =
                 "rgba(255, 255, 255, 0.07)";
 
-            new Chart(
-                document.getElementById(
-                    "sheetsChart"
-                ),
-                {
-                    type: "bar",
+            const sheetsChartElement =
+                document.getElementById("sheetsChart");
+
+            if (sheetsChartElement) {
+                new Chart(
+                    sheetsChartElement,
+                    {
+                    type: "{{ sheet_dimensions_widget.widget_type|default:'bar'|escapejs }}",
 
                     data: {
                         labels: sheetNames,
@@ -1080,15 +1264,18 @@
                             }
                         }
                     }
-                }
-            );
+                    }
+                );
+            }
 
-            new Chart(
-                document.getElementById(
-                    "missingChart"
-                ),
-                {
-                    type: "doughnut",
+            const missingChartElement =
+                document.getElementById("missingChart");
+
+            if (missingChartElement) {
+                new Chart(
+                    missingChartElement,
+                    {
+                    type: "{{ missing_values_widget.widget_type|default:'pie'|escapejs }}",
 
                     data: {
                         labels: sheetNames,
@@ -1130,8 +1317,9 @@
                             }
                         }
                     }
-                }
-            );
+                    }
+                );
+            }
 
             const numericLabels = JSON.parse(
                 document.getElementById(
@@ -1166,7 +1354,7 @@
                         "meanChart"
                     ),
                     {
-                        type: "bar",
+                        type: "{{ numeric_means_widget.widget_type|default:'bar'|escapejs }}",
 
                         data: {
                             labels: numericLabels,
@@ -1233,7 +1421,7 @@
                         "rangeChart"
                     ),
                     {
-                        type: "line",
+                        type: "{{ numeric_ranges_widget.widget_type|default:'line'|escapejs }}",
 
                         data: {
                             labels: numericLabels,

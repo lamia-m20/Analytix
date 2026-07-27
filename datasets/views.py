@@ -3,9 +3,14 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.views.decorators.http import require_POST
 import math
 
 import pandas as pd
+
+from dashboards.services.dashboard_store import (
+    get_or_create_dataset_dashboard,
+)
 
 from .forms import DatasetUploadForm
 from .models import Dataset
@@ -50,6 +55,37 @@ def dataset_list(request):
         request,
         'datasets-templates/dataset_home.html',
         context,
+    )
+
+
+@login_required
+@require_POST
+def edit_dashboard(request, dataset_id):
+    dataset = get_object_or_404(
+        Dataset,
+        pk=dataset_id,
+        user=request.user,
+    )
+
+    dashboard_request = request.POST.get(
+        'dashboard_request',
+        '',
+    ).strip()
+
+    if dashboard_request:
+        messages.success(
+            request,
+            f'تم استلام طلبك: {dashboard_request}',
+        )
+    else:
+        messages.error(
+            request,
+            'يرجى كتابة طلب تعديل الداشبورد.',
+        )
+
+    return redirect(
+        'datasets:detail',
+        pk=dataset.pk,
     )
 
 
@@ -321,12 +357,50 @@ def dataset_detail(request, pk):
         user=request.user,
     )
 
+    context = {
+        'dataset': dataset,
+    }
+
+    if dataset.status == 'ready' and dataset.file:
+        try:
+            dataset.file.open('rb')
+            context.update(
+                _analyze_excel(dataset.file)
+            )
+
+            dashboard = get_or_create_dataset_dashboard(
+                dataset,
+                has_numeric_columns=bool(
+                    context['total_numeric_columns']
+                ),
+            )
+            context['dashboard'] = dashboard
+
+            for widget in dashboard.widgets.all():
+                if not widget.is_visible:
+                    continue
+
+                source = widget.settings.get('source')
+
+                if source == 'sheet_dimensions':
+                    context['sheet_dimensions_widget'] = widget
+                elif source == 'missing_values':
+                    context['missing_values_widget'] = widget
+                elif source == 'numeric_means':
+                    context['numeric_means_widget'] = widget
+                elif source == 'numeric_ranges':
+                    context['numeric_ranges_widget'] = widget
+        except Exception:
+            context['error_message'] = (
+                'تعذر إعادة عرض تحليل هذا الملف.'
+            )
+        finally:
+            dataset.file.close()
+
     return render(
         request,
-        'datasets/detail.html',
-        {
-            'dataset': dataset,
-        },
+        'datasets-templates/dataset_home.html',
+        context,
     )
 
 

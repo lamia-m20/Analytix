@@ -20,6 +20,12 @@ urlpatterns = [
     ),
 
     path(
+        '<int:dataset_id>/dashboard/edit/',
+        views.edit_dashboard,
+        name='edit_dashboard',
+    ),
+
+    path(
         '<int:pk>/',
         views.dataset_detail,
         name='detail',
