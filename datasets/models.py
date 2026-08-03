@@ -54,6 +54,7 @@ class Dataset(models.Model):
     file = models.FileField(
         upload_to='analytix/excel_files/%Y/%m/',
         storage=raw_storage,
+          max_length=500,
         validators=[
             FileExtensionValidator(
                 allowed_extensions=[
