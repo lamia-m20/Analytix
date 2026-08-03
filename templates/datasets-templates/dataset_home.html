@@ -229,11 +229,43 @@
         }
 
         .dashboard-edit-form {
+            float: left;
+            width: 31%;
             padding: 20px;
-            margin-bottom: 22px;
+            margin: 0 0 22px 0;
             border: 1px solid rgba(99, 145, 241, 0.2);
             border-radius: 14px;
             background: rgba(8, 19, 36, 0.72);
+        }
+
+        .dashboard-edit-form h3 {
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .assistant-description,
+        .assistant-examples {
+            color: #9daac0;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .assistant-description {
+            margin-bottom: 15px;
+        }
+
+        .assistant-examples {
+            margin-top: 14px;
+        }
+
+        .dashboard-card::after {
+            content: "";
+            display: block;
+            clear: both;
+        }
+
+        .dashboard-card .dashboard-grid {
+            width: 66%;
         }
 
         .dashboard-edit-form label {
@@ -437,6 +469,16 @@
         }
 
         @media (max-width: 900px) {
+            .dashboard-edit-form {
+                float: none;
+                width: 100%;
+                margin-bottom: 22px;
+            }
+
+            .dashboard-card .dashboard-grid {
+                width: 100%;
+            }
+
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
@@ -670,7 +712,7 @@
                             type="button"
                             class="edit-dashboard-button"
                             id="edit-dashboard-button"
-                            aria-expanded="false"
+                            aria-expanded="true"
                             aria-controls="dashboard-edit-form"
                         >
                             تعديل الداشبورد
@@ -684,9 +726,17 @@
                         action="{% url 'datasets:edit_dashboard' dataset.pk %}"
                         class="dashboard-edit-form"
                         id="dashboard-edit-form"
-                        hidden
                     >
                         {% csrf_token %}
+
+                        <h3>
+                            مساعد تعديل الداشبورد
+                        </h3>
+
+                        <p class="assistant-description">
+                            صف التعديل المطلوب بالعربية، وسيتم التحقق منه
+                            قبل تطبيقه على هذه اللوحة.
+                        </p>
 
                         <label for="dashboard-request">
                             اكتب التعديل المطلوب
@@ -703,9 +753,15 @@
                         <button
                             type="submit"
                             class="submit-request-button"
+                            id="submit-dashboard-request"
                         >
-                            تنفيذ الطلب
+                            تنفيذ التعديل
                         </button>
+
+                        <p class="assistant-examples">
+                            أمثلة: غيّر القيم الفارغة إلى أعمدة —
+                            احذف مخطط الأرباح — أضف مخططًا خطيًا للمبيعات.
+                        </p>
                     </form>
                 {% endif %}
 
@@ -759,6 +815,18 @@
                             </div>
                         </div>
                     {% endif %}
+
+                    {% for chart in custom_widget_charts %}
+                        <div class="chart-box">
+                            <h3>
+                                {{ chart.title }}
+                            </h3>
+
+                            <div class="chart-container">
+                                <canvas id="customChart{{ chart.id }}"></canvas>
+                            </div>
+                        </div>
+                    {% endfor %}
 
                 </div>
             </section>
@@ -1046,6 +1114,24 @@
                 );
             }
 
+            if (dashboardEditForm) {
+                dashboardEditForm.addEventListener(
+                    "submit",
+                    function () {
+                        const submitButton =
+                            document.getElementById(
+                                "submit-dashboard-request"
+                            );
+
+                        if (submitButton) {
+                            submitButton.disabled = true;
+                            submitButton.textContent =
+                                "جاري تنفيذ التعديل...";
+                        }
+                    }
+                );
+            }
+
             const form =
                 document.getElementById("excel-form");
 
@@ -1163,6 +1249,11 @@
         {{ numeric_chart_means|json_script:"numeric-chart-means" }}
         {{ numeric_chart_max_values|json_script:"numeric-chart-max-values" }}
         {{ numeric_chart_min_values|json_script:"numeric-chart-min-values" }}
+        {{ custom_widget_charts|json_script:"custom-widget-charts" }}
+        {{ sheet_dimensions_colors|json_script:"sheet-dimensions-colors" }}
+        {{ missing_values_colors|json_script:"missing-values-colors" }}
+        {{ numeric_means_colors|json_script:"numeric-means-colors" }}
+        {{ numeric_ranges_colors|json_script:"numeric-ranges-colors" }}
 
         <script>
             const sheetNames = JSON.parse(
@@ -1194,6 +1285,38 @@
             const chartGridColor =
                 "rgba(255, 255, 255, 0.07)";
 
+            const sheetDimensionsColors = JSON.parse(
+                document.getElementById(
+                    "sheet-dimensions-colors"
+                ).textContent
+            );
+
+            const missingValuesColors = JSON.parse(
+                document.getElementById(
+                    "missing-values-colors"
+                ).textContent
+            );
+
+            const numericMeansColors = JSON.parse(
+                document.getElementById(
+                    "numeric-means-colors"
+                ).textContent
+            );
+
+            const numericRangesColors = JSON.parse(
+                document.getElementById(
+                    "numeric-ranges-colors"
+                ).textContent
+            );
+
+            function chartColor(colors, index, fallback) {
+                if (colors.length === 0) {
+                    return fallback;
+                }
+
+                return colors[index % colors.length];
+            }
+
             const sheetsChartElement =
                 document.getElementById("sheetsChart");
 
@@ -1211,18 +1334,34 @@
                                 label: "عدد الصفوف",
                                 data: sheetRows,
                                 backgroundColor:
-                                    "rgba(75, 124, 255, 0.65)",
+                                    chartColor(
+                                        sheetDimensionsColors,
+                                        0,
+                                        "rgba(75, 124, 255, 0.65)"
+                                    ),
                                 borderColor:
-                                    "rgba(117, 160, 255, 1)",
+                                    chartColor(
+                                        sheetDimensionsColors,
+                                        0,
+                                        "rgba(117, 160, 255, 1)"
+                                    ),
                                 borderWidth: 1
                             },
                             {
                                 label: "عدد الأعمدة",
                                 data: sheetColumns,
                                 backgroundColor:
-                                    "rgba(69, 217, 147, 0.55)",
+                                    chartColor(
+                                        sheetDimensionsColors,
+                                        1,
+                                        "rgba(69, 217, 147, 0.55)"
+                                    ),
                                 borderColor:
-                                    "rgba(69, 217, 147, 1)",
+                                    chartColor(
+                                        sheetDimensionsColors,
+                                        1,
+                                        "rgba(69, 217, 147, 1)"
+                                    ),
                                 borderWidth: 1
                             }
                         ]
@@ -1284,16 +1423,22 @@
                             {
                                 label: "القيم الفارغة",
                                 data: missingValues,
-                                backgroundColor: [
-                                    "rgba(255, 99, 132, 0.75)",
-                                    "rgba(54, 162, 235, 0.75)",
-                                    "rgba(255, 206, 86, 0.75)",
-                                    "rgba(75, 192, 192, 0.75)",
-                                    "rgba(153, 102, 255, 0.75)",
-                                    "rgba(255, 159, 64, 0.75)",
-                                    "rgba(63, 112, 214, 0.75)",
-                                    "rgba(69, 217, 147, 0.75)"
-                                ],
+                                backgroundColor: sheetNames.map(
+                                    function (_, index) {
+                                        return chartColor(
+                                            missingValuesColors,
+                                            index,
+                                            [
+                                                "#ff6384",
+                                                "#36a2eb",
+                                                "#ffce56",
+                                                "#4bc0c0",
+                                                "#9966ff",
+                                                "#ff9f40"
+                                            ][index % 6]
+                                        );
+                                    }
+                                ),
 
                                 borderColor:
                                     "rgba(255, 255, 255, 0.25)",
@@ -1364,9 +1509,17 @@
                                     label: "المتوسط",
                                     data: numericMeans,
                                     backgroundColor:
-                                        "rgba(75, 124, 255, 0.65)",
+                                        chartColor(
+                                            numericMeansColors,
+                                            0,
+                                            "rgba(75, 124, 255, 0.65)"
+                                        ),
                                     borderColor:
-                                        "rgba(117, 160, 255, 1)",
+                                        chartColor(
+                                            numericMeansColors,
+                                            0,
+                                            "rgba(117, 160, 255, 1)"
+                                        ),
                                     borderWidth: 1
                                 }
                             ]
@@ -1431,18 +1584,34 @@
                                     label: "أعلى قيمة",
                                     data: numericMaxValues,
                                     borderColor:
-                                        "rgba(69, 217, 147, 1)",
+                                        chartColor(
+                                            numericRangesColors,
+                                            0,
+                                            "rgba(69, 217, 147, 1)"
+                                        ),
                                     backgroundColor:
-                                        "rgba(69, 217, 147, 0.15)",
+                                        chartColor(
+                                            numericRangesColors,
+                                            0,
+                                            "rgba(69, 217, 147, 0.15)"
+                                        ),
                                     tension: 0.3
                                 },
                                 {
                                     label: "أقل قيمة",
                                     data: numericMinValues,
                                     borderColor:
-                                        "rgba(255, 92, 111, 1)",
+                                        chartColor(
+                                            numericRangesColors,
+                                            1,
+                                            "rgba(255, 92, 111, 1)"
+                                        ),
                                     backgroundColor:
-                                        "rgba(255, 92, 111, 0.15)",
+                                        chartColor(
+                                            numericRangesColors,
+                                            1,
+                                            "rgba(255, 92, 111, 0.15)"
+                                        ),
                                     tension: 0.3
                                 }
                             ]
@@ -1487,6 +1656,96 @@
                     }
                 );
             }
+
+            const customCharts = JSON.parse(
+                document.getElementById(
+                    "custom-widget-charts"
+                ).textContent
+            );
+
+            customCharts.forEach(
+                function (chart) {
+                    const element = document.getElementById(
+                        "customChart" + chart.id
+                    );
+
+                    if (!element) {
+                        return;
+                    }
+
+                    new Chart(
+                        element,
+                        {
+                            type: chart.chart_type,
+                            data: {
+                                labels: chart.labels,
+                                datasets: [
+                                    {
+                                        label: chart.title,
+                                        data: chart.values,
+                                        backgroundColor:
+                                            chart.labels.map(
+                                                function (_, index) {
+                                                    return chartColor(
+                                                        chart.colors || [],
+                                                        index,
+                                                        [
+                                                            "#4b7cff",
+                                                            "#45d993",
+                                                            "#ff9f40",
+                                                            "#9966ff",
+                                                            "#ff6384"
+                                                        ][index % 5]
+                                                    );
+                                                }
+                                            ),
+                                        borderColor:
+                                            chartColor(
+                                                chart.colors || [],
+                                                0,
+                                                "rgba(117, 160, 255, 1)"
+                                            ),
+                                        borderWidth: 2,
+                                        tension: 0.3
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        labels: {
+                                            color: chartTextColor
+                                        }
+                                    }
+                                },
+                                scales: chart.chart_type === "pie"
+                                    ? {}
+                                    : {
+                                        x: {
+                                            ticks: {
+                                                color: chartTextColor
+                                            },
+                                            grid: {
+                                                color: chartGridColor
+                                            }
+                                        },
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                color: chartTextColor
+                                            },
+                                            grid: {
+                                                color: chartGridColor
+                                            }
+                                        }
+                                    }
+                            }
+                        }
+                    );
+                }
+            );
         </script>
 
     {% endif %}

@@ -8,6 +8,18 @@ import math
 
 import pandas as pd
 
+from dashboards.services.dashboard_ai import (
+    DashboardAIError,
+)
+from dashboards.services.dashboard_ai import (
+    apply_dashboard_plan,
+)
+from dashboards.services.dashboard_ai import (
+    build_dashboard_metadata,
+)
+from dashboards.services.dashboard_ai import (
+    request_dashboard_plan,
+)
 from dashboards.services.dashboard_store import (
     get_or_create_dataset_dashboard,
 )
@@ -62,7 +74,9 @@ def dataset_list(request):
 @require_POST
 def edit_dashboard(request, dataset_id):
     dataset = get_object_or_404(
-        Dataset,
+        Dataset.objects.prefetch_related(
+            'sheets__columns'
+        ),
         pk=dataset_id,
         user=request.user,
     )
@@ -72,15 +86,58 @@ def edit_dashboard(request, dataset_id):
         '',
     ).strip()
 
-    if dashboard_request:
-        messages.success(
-            request,
-            f'تم استلام طلبك: {dashboard_request}',
-        )
-    else:
+    if not dashboard_request:
         messages.error(
             request,
             'يرجى كتابة طلب تعديل الداشبورد.',
+        )
+        return redirect(
+            'datasets:detail',
+            pk=dataset.pk,
+        )
+
+    has_numeric_columns = any(
+        any(
+            marker in column.data_type.lower()
+            for marker in (
+                'int',
+                'float',
+                'decimal',
+                'number',
+            )
+        )
+        for sheet in dataset.sheets.all()
+        for column in sheet.columns.all()
+    )
+    dashboard = get_or_create_dataset_dashboard(
+        dataset,
+        has_numeric_columns=has_numeric_columns,
+    )
+    metadata = build_dashboard_metadata(
+        dataset,
+        dashboard,
+    )
+
+    try:
+        plan = request_dashboard_plan(
+            user_request=dashboard_request,
+            metadata=metadata,
+        )
+        applied_count = apply_dashboard_plan(
+            dashboard=dashboard,
+            user=request.user,
+            metadata=metadata,
+            plan=plan,
+        )
+    except DashboardAIError as error:
+        messages.error(
+            request,
+            str(error),
+        )
+    else:
+        messages.success(
+            request,
+            f'تم تعديل {applied_count} مخططات بنجاح.',
         )
 
     return redirect(
@@ -257,6 +314,66 @@ def _analyze_excel(uploaded_file):
     }
 
 
+def _build_custom_widget_charts(
+    excel_file,
+    widgets,
+):
+    charts = []
+
+    for widget in widgets:
+        settings = widget.settings or {}
+        if settings.get('source') != 'custom':
+            continue
+
+        sheet_name = settings.get('sheet_name')
+        if (
+            not sheet_name
+            or not widget.x_column
+            or not widget.y_column
+        ):
+            continue
+
+        excel_file.seek(0)
+        frame = pd.read_excel(
+            excel_file,
+            sheet_name=sheet_name,
+            usecols=list({
+                widget.x_column,
+                widget.y_column,
+            }),
+        )
+        grouped = frame.groupby(
+            widget.x_column,
+            dropna=False,
+        )[widget.y_column]
+
+        if widget.aggregation == 'sum':
+            values = grouped.sum()
+        elif widget.aggregation == 'average':
+            values = grouped.mean()
+        else:
+            values = grouped.count()
+
+        charts.append(
+            {
+                'id': widget.pk,
+                'title': widget.title,
+                'chart_type': widget.widget_type,
+                'colors': settings.get('colors', []),
+                'labels': [
+                    _display_value(value)
+                    for value in values.index.tolist()
+                ],
+                'values': [
+                    _rounded_number(value)
+                    for value in values.tolist()
+                ],
+            }
+        )
+
+    return charts
+
+
 @login_required
 def upload_dataset(request):
     if request.method == 'POST':
@@ -384,12 +501,33 @@ def dataset_detail(request, pk):
 
                 if source == 'sheet_dimensions':
                     context['sheet_dimensions_widget'] = widget
+                    context['sheet_dimensions_colors'] = (
+                        widget.settings or {}
+                    ).get('colors', [])
                 elif source == 'missing_values':
                     context['missing_values_widget'] = widget
+                    context['missing_values_colors'] = (
+                        widget.settings or {}
+                    ).get('colors', [])
                 elif source == 'numeric_means':
                     context['numeric_means_widget'] = widget
+                    context['numeric_means_colors'] = (
+                        widget.settings or {}
+                    ).get('colors', [])
                 elif source == 'numeric_ranges':
                     context['numeric_ranges_widget'] = widget
+                    context['numeric_ranges_colors'] = (
+                        widget.settings or {}
+                    ).get('colors', [])
+
+            context['custom_widget_charts'] = (
+                _build_custom_widget_charts(
+                    dataset.file,
+                    dashboard.widgets.filter(
+                        is_visible=True
+                    ),
+                )
+            )
         except Exception:
             context['error_message'] = (
                 'تعذر إعادة عرض تحليل هذا الملف.'
