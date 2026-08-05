@@ -1069,6 +1069,21 @@
 
             {% endfor %}
 
+            {% if dataset and dataset.status == 'ready' %}
+                <section class="result-card export-card" aria-labelledby="export-title">
+                    <h2 class="section-title" id="export-title">تصدير التقرير الشامل</h2>
+                    <p>حمّل تقريرًا متكاملًا وجاهزًا للمشاركة يتضمن ملخص التحليل، جودة البيانات، الإحصاءات، الرسوم البيانية، الاستنتاجات والتوصيات.</p>
+                    <p>قد يستغرق تجهيز التقرير بعض الوقت للملفات الكبيرة.</p>
+                    <div class="export-actions" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px">
+                        <div><a class="analyze-button export-button" href="{% url 'datasets:export_excel' dataset.pk %}" download>📊 تحميل التقرير الشامل Excel</a><small style="display:block;margin-top:8px">أوراق تحليل منسقة ومؤشرات ورسوم ومعاينات.</small></div>
+                        <div><a class="analyze-button export-button" href="{% url 'datasets:export_pdf' dataset.pk %}" download>📄 تحميل التقرير الشامل PDF</a><small style="display:block;margin-top:8px">تقرير عربي جاهز للطباعة والمشاركة.</small></div>
+                        <div><a class="analyze-button export-button" href="{% url 'datasets:export_csv' dataset.pk %}" download>📦 تحميل حزمة البيانات CSV</a><small style="display:block;margin-top:8px">البيانات وملفات الملخص والجودة بترميز عربي.</small></div>
+                        <div><a class="analyze-button export-button" href="{% url 'datasets:export_powerpoint' dataset.pk %}" download>📽️ تصدير PowerPoint</a><small style="display:block;margin-top:8px">عرض احترافي جاهز للمشاركة يضم المؤشرات والرسوم والمشكلات والتوصيات.</small></div>
+                    </div>
+                    <p class="export-status" role="status" aria-live="polite" hidden>جارٍ تجهيز التقرير للتنزيل…</p>
+                </section>
+            {% endif %}
+
         {% endif %}
 
     </main>
@@ -1077,6 +1092,23 @@
 
     <script>
         (function () {
+            document.querySelectorAll('.export-button').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const status = document.querySelector('.export-status');
+                    document.querySelectorAll('.export-button').forEach(function (item) {
+                        item.style.pointerEvents = 'none';
+                        item.setAttribute('aria-disabled', 'true');
+                    });
+                    if (status) status.hidden = false;
+                    window.setTimeout(function () {
+                        document.querySelectorAll('.export-button').forEach(function (item) {
+                            item.style.pointerEvents = '';
+                            item.removeAttribute('aria-disabled');
+                        });
+                        if (status) status.hidden = true;
+                    }, 3000);
+                });
+            });
             const editDashboardButton =
                 document.getElementById(
                     "edit-dashboard-button"

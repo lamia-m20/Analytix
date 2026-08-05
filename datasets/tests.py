@@ -1,8 +1,16 @@
 from io import BytesIO
+import csv
+import io
 import os
+import zipfile
 from unittest.mock import patch
 
 import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
+from pptx import Presentation
+from pptx.util import Inches
+from PIL import Image as PILImage
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
@@ -29,6 +37,417 @@ from dashboards.services.dashboard_store import (
 from .models import Dataset
 from .models import DatasetColumn
 from .models import DatasetSheet
+
+
+class DatasetExportTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(username='exporter', password='test-password')
+        self.other = get_user_model().objects.create_user(username='other-exporter', password='test-password')
+        self.dataset = Dataset.objects.create(
+            user=self.user, title='تقرير المبيعات', original_filename='المبيعات.xlsx',
+            file='tests/sales.xlsx', status='ready',
+        )
+        self.frames = {
+            'المبيعات': pd.DataFrame({'المدينة': ['الرياض', 'جدة'], 'القيمة': [100, 200]}),
+            'الفروع': pd.DataFrame({'الفرع': ['شمال'], 'الموظفون': [8]}),
+        }
+        self.client.force_login(self.user)
+
+    def _response(self, name):
+        with patch('datasets.views.load_workbook_data', return_value=self.frames):
+            return self.client.get(reverse(f'datasets:{name}', args=[self.dataset.pk]))
+
+    def test_anonymous_user_is_redirected(self):
+        self.client.logout()
+        response = self.client.get(reverse('datasets:export_excel', args=[self.dataset.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response.url)
+
+    def test_user_cannot_export_another_users_dataset(self):
+        self.client.force_login(self.other)
+        response = self.client.get(reverse('datasets:export_pdf', args=[self.dataset.pk]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_anonymous_user_cannot_export_powerpoint(self):
+        self.client.logout()
+        response = self.client.get(
+            reverse('datasets:export_powerpoint', args=[self.dataset.pk])
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response.url)
+
+    def test_user_cannot_export_another_users_powerpoint(self):
+        self.client.force_login(self.other)
+        response = self.client.get(
+            reverse('datasets:export_powerpoint', args=[self.dataset.pk])
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_missing_dataset_returns_404(self):
+        response = self.client.get(reverse('datasets:export_csv', args=[999999]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_excel_export(self):
+        response = self._response('export_excel')
+        content = b''.join(response.streaming_content)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        self.assertIn('attachment;', response['Content-Disposition'])
+        self.assertIn('analytix_report_', response['Content-Disposition'])
+        self.assertTrue(content.startswith(b'PK'))
+
+    def test_csv_export_uses_zip_for_multiple_sheets_and_arabic_utf8(self):
+        response = self._response('export_csv')
+        content = b''.join(response.streaming_content)
+        self.assertEqual(response['Content-Type'], 'application/zip')
+        self.assertIn('.zip', response['Content-Disposition'])
+        with zipfile.ZipFile(BytesIO(content)) as archive:
+            csv_content = archive.read(archive.namelist()[0])
+        self.assertTrue(csv_content.startswith(b'\xef\xbb\xbf'))
+        self.assertIn('الرياض'.encode('utf-8'), csv_content)
+        header = csv_content.decode('utf-8-sig').splitlines()[0]
+        self.assertIn(';', header)
+        self.assertNotIn(',', header)
+
+    def test_single_sheet_csv_uses_excel_arabic_dialect(self):
+        frames = {
+            'المبيعات': pd.DataFrame({
+                'المدينة': ['الرياض', 'جدة'],
+                'القيمة': [100, 200],
+            })
+        }
+        with patch('datasets.views.load_workbook_data', return_value=frames):
+            response = self.client.get(
+                reverse('datasets:export_csv', args=[self.dataset.pk])
+            )
+        content = b''.join(response.streaming_content)
+        self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8-sig')
+        self.assertTrue(content.startswith(b'\xef\xbb\xbf'))
+        decoded = content.decode('utf-8-sig')
+        parsed = list(csv.reader(io.StringIO(decoded, newline=''), delimiter=';'))
+        self.assertEqual(parsed[0], ['المدينة', 'القيمة'])
+        self.assertEqual(len(parsed[1]), 2)
+
+    def test_pdf_export(self):
+        from datasets.exporters import get_arabic_font_path
+        try:
+            get_arabic_font_path()
+        except Exception:
+            self.skipTest('ضع خطًا عربيًا في static/fonts لتشغيل اختبار PDF الفعلي.')
+        response = self._response('export_pdf')
+        content = b''.join(response.streaming_content)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment;', response['Content-Disposition'])
+        self.assertTrue(content.startswith(b'%PDF'))
+        self.assertNotIn(b'nnnnnn', content.lower())
+        self.assertIn(b'/Subtype /Image', content)
+
+    def test_powerpoint_export_is_valid_and_contains_core_slides(self):
+        response = self._response('export_powerpoint')
+        content = b''.join(response.streaming_content)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        )
+        self.assertIn('attachment;', response['Content-Disposition'])
+        self.assertIn('.pptx', response['Content-Disposition'])
+        self.assertTrue(content.startswith(b'PK'))
+        presentation = Presentation(BytesIO(content))
+        self.assertGreaterEqual(len(presentation.slides), 8)
+        all_text = '\n'.join(
+            shape.text
+            for slide in presentation.slides
+            for shape in slide.shapes
+            if hasattr(shape, 'text')
+        )
+        self.assertIn('تقرير تحليل البيانات الشامل', all_text)
+        self.assertIn('الملخص التنفيذي', all_text)
+        self.assertIn('التوصيات', all_text)
+        self.assertIn('مؤشرات الجودة', all_text)
+        self.assertIn('Analytix', all_text)
+        picture_count = sum(
+            1 for slide in presentation.slides for shape in slide.shapes
+            if shape.shape_type == 13
+        )
+        self.assertGreaterEqual(picture_count, 1)
+
+    def test_powerpoint_without_numeric_columns_or_widgets(self):
+        frames = {'نصوص': pd.DataFrame({'الفئة': ['أ', 'ب', 'أ']})}
+        with patch('datasets.views.load_workbook_data', return_value=frames):
+            response = self.client.get(
+                reverse('datasets:export_powerpoint', args=[self.dataset.pk])
+            )
+        content = b''.join(response.streaming_content)
+        self.assertTrue(content.startswith(b'PK'))
+        self.assertGreater(len(Presentation(BytesIO(content)).slides), 5)
+
+    def test_powerpoint_chart_failure_does_not_stop_export(self):
+        with patch('datasets.views.load_workbook_data', return_value=self.frames), patch(
+            'datasets.powerpoint._dashboard_chart', return_value=None
+        ):
+            response = self.client.get(
+                reverse('datasets:export_powerpoint', args=[self.dataset.pk])
+            )
+        content = b''.join(response.streaming_content)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(content.startswith(b'PK'))
+        self.assertGreater(len(Presentation(BytesIO(content)).slides), 5)
+
+    def test_powerpoint_uses_design_grid_and_six_summary_cards(self):
+        response = self._response('export_powerpoint')
+        presentation = Presentation(BytesIO(b''.join(response.streaming_content)))
+        self.assertAlmostEqual(presentation.slide_width / presentation.slide_height, 16 / 9, places=2)
+        summary_slide = presentation.slides[1]
+        kpi_cards = [shape for shape in summary_slide.shapes if shape.name == 'KPI_CARD']
+        self.assertEqual(len(kpi_cards), 6)
+        for slide in list(presentation.slides)[1:-1]:
+            names = {shape.name for shape in slide.shapes}
+            self.assertIn('ANALYTIX_HEADER', names)
+            self.assertIn('ANALYTIX_FOOTER', names)
+            self.assertIn('PAGE_NUMBER', names)
+        chart_pictures = [
+            shape for slide in presentation.slides for shape in slide.shapes
+            if shape.name == 'CHART_PICTURE'
+        ]
+        self.assertTrue(chart_pictures)
+        self.assertGreaterEqual(chart_pictures[0].width, Inches(8.5))
+        self.assertGreaterEqual(chart_pictures[0].height, Inches(3.8))
+        chart_slide_text = '\n'.join(
+            shape.text
+            for slide in presentation.slides
+            if any(shape.name == 'CHART_PICTURE' for shape in slide.shapes)
+            for shape in slide.shapes
+            if hasattr(shape, 'text')
+        )
+        self.assertIn('القراءة الرئيسية', chart_slide_text)
+        for slide in presentation.slides:
+            if any(shape.name == 'CHART_PICTURE' for shape in slide.shapes):
+                insight_panels = [shape for shape in slide.shapes if shape.name == 'INSIGHT_PANEL']
+                self.assertEqual(len(insight_panels), 1)
+                self.assertEqual(len([shape for shape in slide.shapes if shape.name == 'CHART_KPI']), 4)
+                background = slide.background.fill.fore_color.rgb
+                self.assertEqual(str(background), '17324A')
+        executive_names = {shape.name for shape in summary_slide.shapes}
+        self.assertIn('DASHBOARD_SIDEBAR', executive_names)
+        self.assertIn('EXECUTIVE_BAR', executive_names)
+        self.assertIn('EXECUTIVE_DONUT', executive_names)
+        self.assertIn('EXECUTIVE_GAUGE', executive_names)
+        for slide in presentation.slides:
+            for shape in slide.shapes:
+                self.assertGreaterEqual(shape.left, 0)
+                self.assertGreaterEqual(shape.top, 0)
+                self.assertLessEqual(shape.left + shape.width, presentation.slide_width)
+                self.assertLessEqual(shape.top + shape.height, presentation.slide_height)
+
+    def test_powerpoint_recommendations_use_one_priority_map(self):
+        from datasets.exporters import build_report_data
+        from datasets.powerpoint import build_powerpoint_report
+        report = build_report_data(self.dataset, self.frames)
+        report['executive_summary']['recommendations'] = [
+            f'توصية عملية طويلة رقم {index} مرتبطة بنتائج جودة البيانات.'
+            for index in range(7)
+        ]
+        presentation = Presentation(build_powerpoint_report(self.dataset, report))
+        recommendation_slides = []
+        for slide in presentation.slides:
+            text = '\n'.join(shape.text for shape in slide.shapes if hasattr(shape, 'text'))
+            if 'خارطة الأولويات' in text:
+                recommendation_slides.append(slide)
+        self.assertEqual(len(recommendation_slides), 1)
+        priority_text = '\n'.join(
+            shape.text for shape in recommendation_slides[0].shapes if hasattr(shape, 'text')
+        )
+        self.assertIn('مرتفعة', priority_text)
+        self.assertIn('متوسطة', priority_text)
+        self.assertIn('منخفضة', priority_text)
+
+    def test_powerpoint_chart_arabic_is_shaped_only_for_matplotlib(self):
+        from datasets.powerpoint import prepare_arabic_for_chart
+
+        samples = ('درجة الجودة', 'القيم الفارغة', 'الصفوف المكررة', 'جودة البيانات 79%')
+        for sample in samples:
+            prepared = prepare_arabic_for_chart(sample)
+            self.assertNotEqual(prepared, sample)
+            self.assertNotIn('nnnn', prepared.lower())
+        self.assertIn('79%', prepare_arabic_for_chart('جودة البيانات 79%'))
+        self.assertEqual(prepare_arabic_for_chart('Analytix'), 'Analytix')
+
+    def test_pdf_missing_arabic_font_returns_clear_message(self):
+        from datasets.exporters import ArabicFontNotFoundError
+        with patch('datasets.exporters.get_arabic_font_path', side_effect=ArabicFontNotFoundError('الخط العربي غير موجود')):
+            response = self._response('export_pdf')
+        self.assertEqual(response.status_code, 503)
+        self.assertContains(response, 'الخط العربي غير موجود', status_code=503)
+
+    def test_prepare_arabic_text_preserves_english(self):
+        from datasets.exporters import prepare_arabic_text
+        samples = (
+            'تقرير تحليل البيانات', 'القيم الفارغة', 'عدد الصفوف',
+            'عدد الأعمدة', 'Analytix', 'تقرير Analytix لتحليل البيانات',
+        )
+        prepared = [prepare_arabic_text(value) for value in samples]
+        self.assertEqual(prepared[4], 'Analytix')
+        self.assertIn('Analytix', prepared[5])
+        self.assertNotIn('nnnnnn', ''.join(prepared).lower())
+
+    def test_cloud_file_failure_returns_arabic_message(self):
+        from datasets.exporters import ExportSourceError
+        with patch('datasets.views.load_workbook_data', side_effect=ExportSourceError('تعذر الوصول إلى ملف البيانات.')):
+            response = self.client.get(reverse('datasets:export_excel', args=[self.dataset.pk]))
+        self.assertEqual(response.status_code, 503)
+        self.assertContains(response, 'تعذر الوصول', status_code=503)
+
+    def test_unified_report_data_covers_quality_duplicates_dates_and_arabic(self):
+        from datasets.exporters import build_report_data
+        frames = {
+            'بيانات عربية': pd.DataFrame({
+                'المدينة': ['الرياض', 'الرياض', None, 'جدة'],
+                'القيمة': [10, 10, 1000, 20],
+                'التاريخ': pd.to_datetime(['2025-01-01', '2025-01-01', '2025-03-01', '2025-04-01']),
+            })
+        }
+        report = build_report_data(self.dataset, frames)
+        sheet = report['sheets'][0]
+        self.assertEqual(report['summary']['sheet_count'], 1)
+        self.assertEqual(sheet['duplicates'], 1)
+        self.assertEqual(sheet['missing'][0]['column'], 'المدينة')
+        self.assertEqual(sheet['date_analysis'][0]['column'], 'التاريخ')
+        self.assertLess(sheet['quality_score'], 100)
+        self.assertTrue(report['executive_summary']['insights'])
+
+    def test_report_without_numeric_columns(self):
+        from datasets.exporters import build_report_data
+        report = build_report_data(self.dataset, {
+            'نصوص': pd.DataFrame({'الفئة': ['أ', 'ب', 'أ']})
+        })
+        self.assertEqual(report['sheets'][0]['numeric_stats'], [])
+        self.assertTrue(report['sheets'][0]['text_analysis'])
+
+    def test_comprehensive_excel_contains_required_sheets(self):
+        from datasets.exporters import build_excel, build_report_data
+        report = build_report_data(self.dataset, self.frames)
+        stream = build_excel(self.dataset, report)
+        workbook = load_workbook(stream, read_only=True)
+        required = {
+            'غلاف التقرير', 'Dashboard', 'الملخص التنفيذي', 'مؤشرات الجودة', 'معلومات الأوراق',
+            'جودة البيانات', 'القيم الفارغة', 'الصفوف المكررة', 'أنواع الأعمدة',
+            'الإحصاءات الرقمية', 'التحليل النصي', 'تحليل التواريخ',
+            'القيم الشاذة', 'الارتباطات', 'عناصر الداشبورد', 'التوصيات',
+        }
+        self.assertTrue(required.issubset(set(workbook.sheetnames)))
+        workbook.close(); stream.close()
+
+    def test_shared_chart_theme_uses_high_resolution(self):
+        from datasets.exporters import _report_chart
+        chart = _report_chart(['أ', 'ب', 'ج'], [10, 20, 15], 'مؤشر الجودة')
+        image = PILImage.open(chart)
+        dpi = image.info.get('dpi', (0, 0))
+        self.assertGreaterEqual(dpi[0], 299)
+        self.assertGreater(image.width, 2000)
+        image.close(); chart.close()
+
+    def test_zip_contains_analysis_files_and_readme(self):
+        from datasets.exporters import build_csv, build_report_data
+        stream, content_type, extension = build_csv(
+            self.dataset, build_report_data(self.dataset, self.frames)
+        )
+        with zipfile.ZipFile(stream) as archive:
+            names = set(archive.namelist())
+        self.assertEqual(content_type, 'application/zip')
+        self.assertEqual(extension, '.zip')
+        self.assertIn('README.txt', names)
+        self.assertIn('الملخص_التنفيذي.csv', names)
+        self.assertIn('جودة_البيانات.csv', names)
+        with zipfile.ZipFile(stream) as archive:
+            for name in (item for item in archive.namelist() if item.endswith('.csv')):
+                csv_bytes = archive.read(name)
+                self.assertTrue(csv_bytes.startswith(b'\xef\xbb\xbf'))
+                first_line = csv_bytes.decode('utf-8-sig').splitlines()[0]
+                if first_line:
+                    self.assertNotIn(',', first_line)
+
+    def test_export_formats_have_distinct_roles_and_payloads(self):
+        from datasets.exporters import (
+            build_csv_package, build_excel_report, build_pdf_report,
+            build_report_data,
+        )
+        one_sheet = {'المبيعات': self.frames['المبيعات']}
+        report = build_report_data(self.dataset, one_sheet)
+        excel = build_excel_report(self.dataset, report).getvalue()
+        pdf = build_pdf_report(self.dataset, report).getvalue()
+        csv_stream, _, _ = build_csv_package(self.dataset, report)
+        csv_payload = csv_stream.getvalue()
+        self.assertTrue(excel.startswith(b'PK'))
+        self.assertTrue(pdf.startswith(b'%PDF'))
+        self.assertTrue(csv_payload.startswith(b'\xef\xbb\xbf'))
+        self.assertNotEqual(excel, pdf)
+        self.assertNotEqual(pdf, csv_payload)
+
+    def test_chart_failure_does_not_stop_pdf(self):
+        from datasets.exporters import build_pdf, build_report_data
+        report = build_report_data(self.dataset, self.frames)
+        with patch('datasets.exporters.plt.subplots', side_effect=RuntimeError('chart failed')):
+            stream = build_pdf(self.dataset, report)
+        self.assertTrue(stream.read(4).startswith(b'%PDF'))
+        stream.close()
+
+    def test_large_report_limit_is_documented(self):
+        from datasets.exporters import MAX_REPORT_CELLS, PREVIEW_ROWS
+        self.assertEqual(PREVIEW_ROWS, 100)
+        self.assertGreaterEqual(MAX_REPORT_CELLS, 1_000_000)
+
+    def test_unnamed_columns_are_cleaned_for_report_only(self):
+        from datasets.exporters import build_report_data
+        source = pd.DataFrame({
+            'الاسم': ['أ', 'ب'],
+            'Unnamed: 1': [None, None],
+            'Unnamed: 2': ['قيمة', None],
+        })
+        report = build_report_data(self.dataset, {'ورقة': source})
+        names = [item['column'] for item in report['sheets'][0]['columns_info']]
+        self.assertNotIn('Unnamed: 1', names)
+        self.assertNotIn('Unnamed: 2', names)
+        self.assertIn('عمود غير مسمى 1', names)
+        self.assertIn('Unnamed: 1', source.columns)
+        self.assertIn('Unnamed: 2', source.columns)
+
+    def test_excel_auto_width_dates_long_arabic_and_safe_sheet_names(self):
+        from datasets.exporters import build_excel_report, build_report_data
+        long_text = 'هذا نص عربي طويل لاختبار التفاف النص وضبط ارتفاع الصف تلقائيًا ' * 3
+        common_prefix = 'اسم ورقة عربي طويل جدًا يتجاوز واحدًا وثلاثين حرفًا'
+        frames = {
+            f'{common_prefix} أ': pd.DataFrame({
+                'التاريخ الطويل': pd.to_datetime(['2026-08-05']),
+                'الوصف': [long_text],
+                'Unnamed: 1': [None],
+            }),
+            f'{common_prefix} ب': pd.DataFrame({f'عمود {index}': [index] for index in range(20)}),
+        }
+        report = build_report_data(self.dataset, frames)
+        stream = build_excel_report(self.dataset, report)
+        workbook = load_workbook(stream)
+        preview_names = [name for name in workbook.sheetnames if name.startswith('معاينة')]
+        self.assertEqual(len(preview_names), 2)
+        self.assertEqual(len(set(preview_names)), 2)
+        self.assertTrue(all(len(name) <= 31 for name in preview_names))
+        first_preview = workbook[preview_names[0]]
+        headers = [cell.value for cell in first_preview[1]]
+        self.assertNotIn('Unnamed: 1', headers)
+        date_column = headers.index('التاريخ الطويل') + 1
+        self.assertEqual(first_preview.cell(2, date_column).number_format, 'yyyy-mm-dd')
+        self.assertGreaterEqual(first_preview.column_dimensions[get_column_letter(date_column)].width, 12)
+        self.assertLessEqual(first_preview.column_dimensions['B'].width, 45)
+        self.assertGreater(first_preview.row_dimensions[2].height, 15)
+        self.assertTrue(first_preview.freeze_panes == 'A2')
+        self.assertTrue(first_preview.auto_filter.ref)
+        workbook.close(); stream.close()
+
+    def test_preview_excludes_fully_empty_rows_and_columns(self):
+        from datasets.exporters import build_report_data
+        frame = pd.DataFrame({'بيانات': ['قيمة', None], 'فارغ': [None, None]})
+        report = build_report_data(self.dataset, {'ورقة': frame})
+        preview = report['sheets'][0]['preview'].dropna(axis=0, how='all').dropna(axis=1, how='all')
+        self.assertEqual(preview.shape, (1, 1))
 
 
 class DatasetDashboardTests(TestCase):

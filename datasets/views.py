@@ -3,8 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.http import FileResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 import math
+import logging
 
 import pandas as pd
 
@@ -27,6 +30,66 @@ from dashboards.services.dashboard_store import (
 from .forms import DatasetUploadForm
 from .models import Dataset
 from .services import create_dataset_structure
+from .exporters import (
+    ExportSourceError, build_csv_package, build_excel_report, build_pdf_report,
+    build_report_data, load_workbook_data,
+)
+from .powerpoint import PPTX_CONTENT_TYPE, build_powerpoint_report
+
+logger = logging.getLogger(__name__)
+
+
+def _export_dataset(request, dataset_id, export_type):
+    dataset = get_object_or_404(Dataset, pk=dataset_id, user=request.user)
+    if dataset.status != 'ready' or not dataset.file:
+        return HttpResponse('لا يمكن تصدير الملف قبل اكتمال التحليل.', status=409)
+    try:
+        frames = load_workbook_data(dataset)
+        report_data = build_report_data(dataset, frames)
+        if export_type == 'excel':
+            stream, content_type, extension = build_excel_report(dataset, report_data), (
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            ), '.xlsx'
+        elif export_type == 'csv':
+            stream, content_type, extension = build_csv_package(dataset, report_data)
+        elif export_type == 'pdf':
+            stream, content_type, extension = build_pdf_report(dataset, report_data), 'application/pdf', '.pdf'
+        else:
+            stream, content_type, extension = build_powerpoint_report(dataset, report_data), PPTX_CONTENT_TYPE, '.pptx'
+    except ExportSourceError as error:
+        return HttpResponse(str(error), status=503, content_type='text/plain; charset=utf-8')
+    except Exception:
+        logger.exception('Report export failed for dataset %s', dataset.pk)
+        return HttpResponse(
+            'تعذر تجهيز التقرير حاليًا. يرجى المحاولة مرة أخرى لاحقًا.',
+            status=500,
+            content_type='text/plain; charset=utf-8',
+        )
+    date_format = '%Y-%m-%d' if export_type == 'powerpoint' else '%Y%m%d'
+    report_date = timezone.localdate().strftime(date_format)
+    label = 'data' if export_type == 'csv' else 'report'
+    filename = f'analytix_{label}_{dataset.pk}_{report_date}{extension}'
+    return FileResponse(stream, as_attachment=True, filename=filename, content_type=content_type)
+
+
+@login_required
+def export_excel(request, dataset_id):
+    return _export_dataset(request, dataset_id, 'excel')
+
+
+@login_required
+def export_csv(request, dataset_id):
+    return _export_dataset(request, dataset_id, 'csv')
+
+
+@login_required
+def export_pdf(request, dataset_id):
+    return _export_dataset(request, dataset_id, 'pdf')
+
+
+@login_required
+def export_powerpoint(request, dataset_id):
+    return _export_dataset(request, dataset_id, 'powerpoint')
 
 
 @login_required

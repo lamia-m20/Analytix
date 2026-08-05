@@ -24,6 +24,10 @@ urlpatterns = [
         views.edit_dashboard,
         name='edit_dashboard',
     ),
+    path('<int:dataset_id>/export/excel/', views.export_excel, name='export_excel'),
+    path('<int:dataset_id>/export/csv/', views.export_csv, name='export_csv'),
+    path('<int:dataset_id>/export/pdf/', views.export_pdf, name='export_pdf'),
+    path('<int:dataset_id>/export/powerpoint/', views.export_powerpoint, name='export_powerpoint'),
 
     path(
         '<int:pk>/',
