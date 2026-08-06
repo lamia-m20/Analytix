@@ -203,7 +203,12 @@ def add_chart_slide_modern(slide, chart, insight='', metrics=None):
         card.line.color.rgb = PANEL_BORDER; card.line.width = Pt(.5)
         _textbox(slide, str(value), left + Inches(.12), Inches(1.2), Inches(1.05), Inches(.4), 19, True, color, PP_ALIGN.LEFT)
         _textbox(slide, label, left + Inches(1.1), Inches(1.24), Inches(1.52), Inches(.3), 11, False, SLATE)
-    picture = slide.shapes.add_picture(chart, Inches(.72), Inches(1.98), width=Inches(11.95), height=Inches(3.92))
+    chart_width = Inches(11.95)
+    chart_left = (SLIDE_WIDTH - chart_width) // 2
+    picture = slide.shapes.add_picture(
+        chart, chart_left, Inches(1.98),
+        width=chart_width, height=Inches(3.92),
+    )
     picture.name = 'CHART_PICTURE'
     add_insight_panel(slide, insight or 'يعرض الرسم أبرز القيم المحسوبة من البيانات، ويُوصى بالبدء بالفئة الأعلى أثرًا عند المراجعة.')
     return picture
@@ -286,7 +291,7 @@ _kpi_card = add_kpi_card_modern
 
 
 def _dashboard_chart(labels, values, kind='bar', colors_list=None):
-    """Render a transparent, dark-dashboard chart used only by PowerPoint."""
+    """Render an Arabic-safe chart used only by PowerPoint."""
     buffer = io.BytesIO()
     figure = None
     try:
@@ -312,22 +317,15 @@ def _dashboard_chart(labels, values, kind='bar', colors_list=None):
             axis.legend(wedges, display_labels, frameon=False, labelcolor='#CBD5E1',
                         loc='center left', bbox_to_anchor=(-.05, .5), fontsize=9, prop=chart_font)
             axis.axis('equal')
-        elif kind == 'line':
-            axis.plot(display_labels, values, color='#06B6D4', linewidth=3,
-                      marker='o', markersize=7, markerfacecolor='#10B981')
-            axis.fill_between(range(len(values)), values, color='#06B6D4', alpha=.12)
-            axis.grid(axis='y', color='#3B6A82', linewidth=.6, alpha=.5)
-            for index, value in enumerate(values):
-                axis.annotate(prepare_arabic_for_chart(f'{value:,.1f}'), (index, value), xytext=(0, 9),
-                              textcoords='offset points', ha='center', color='#E2E8F0', fontsize=9,
-                              fontproperties=chart_font)
-        elif len(values) > 5:
-            bars = axis.barh(display_labels, values, color=palette, height=.56)
-            axis.invert_yaxis(); axis.grid(axis='x', color='#3B6A82', linewidth=.6, alpha=.5)
-            labels_drawn = axis.bar_label(bars, fmt='{:,.0f}', padding=5, color='#E2E8F0', fontsize=9)
-            for label in labels_drawn: label.set_fontproperties(chart_font)
         else:
-            bars = axis.bar(display_labels, values, color=palette, width=.55)
+            positions = range(len(values))
+            bars = axis.bar(positions, values, color=palette, width=.55)
+            axis.set_xticks(list(positions))
+            axis.set_xticklabels(
+                display_labels,
+                rotation=24 if len(values) > 5 else 0,
+                ha='right' if len(values) > 5 else 'center',
+            )
             axis.grid(axis='y', color='#3B6A82', linewidth=.6, alpha=.5)
             labels_drawn = axis.bar_label(bars, fmt='{:,.0f}', padding=5, color='#E2E8F0', fontsize=10, fontweight='bold')
             for label in labels_drawn: label.set_fontproperties(chart_font)
@@ -335,8 +333,12 @@ def _dashboard_chart(labels, values, kind='bar', colors_list=None):
             axis.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f'{value:,.0f}'))
             for label in (*axis.get_xticklabels(), *axis.get_yticklabels()):
                 label.set_fontproperties(chart_font)
-        figure.tight_layout(pad=.8)
-        figure.savefig(buffer, format='png', dpi=300, facecolor='#20445D', bbox_inches='tight')
+        figure.subplots_adjust(
+            left=.07, right=.97,
+            bottom=.25 if len(values) > 5 and kind not in ('pie', 'donut') else .13,
+            top=.95,
+        )
+        figure.savefig(buffer, format='png', dpi=300, facecolor='#20445D')
         buffer.seek(0)
         return buffer
     except Exception:
@@ -357,7 +359,7 @@ def _dashboard_widget_chart(widget, report):
         values = values.head(TOP_RESULTS)
         return _dashboard_chart(
             [str(value) for value in values.index], list(values.values),
-            widget['type'] if widget['type'] in ('bar', 'line', 'pie') else 'bar',
+            'bar',
         )
     except Exception:
         return None
@@ -370,7 +372,7 @@ def _chart_slide(prs, title, labels, values, number, kind='bar', palette=None):
         maximum_index = max(range(len(values[:8])), key=lambda index: values[index])
         chart_colors = ['#2563EB'] * len(values[:8])
         chart_colors[maximum_index] = '#06B6D4'
-    chart = _dashboard_chart(short_labels, values[:8], kind, chart_colors)
+    chart = _dashboard_chart(short_labels, values[:8], 'bar', chart_colors)
     if not chart:
         return False
     try:

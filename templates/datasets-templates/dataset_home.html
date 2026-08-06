@@ -533,9 +533,11 @@
             }
         }
     </style>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/analytix-fabric.css' %}">
 </head>
 
-<body>
+<body class="dataset-page">
 
     {% include 'header.html' %}
 
@@ -643,7 +645,8 @@
                 وإنشاء الداشبورد بنجاح.
             </div>
 
-            <section class="result-card">
+            <div class="analytics-layout">
+            <section class="result-card overview-panel">
                 <h2 class="section-title">
                     الملخص العام للملف
                 </h2>
@@ -728,6 +731,20 @@
                         id="dashboard-edit-form"
                     >
                         {% csrf_token %}
+
+                        <div class="assistant-title">
+                            <span class="assistant-mark">A</span>
+                            <h3>مساعد Analytix</h3>
+                        </div>
+
+                        <div class="assistant-feed" aria-live="polite">
+                            <div class="assistant-message">تم ربط الملف <strong>{{ file_name }}</strong> ببيانات التحليل.</div>
+                            <div class="assistant-message assistant-message-soft">تم تحليل {{ sheets_count }} ورقة و{{ total_rows }} صفًا بنجاح.</div>
+                            <div class="assistant-progress">
+                                <div class="assistant-progress-label"><span>حالة التحليل</span><strong>مكتمل</strong></div>
+                                <div class="assistant-progress-track"><span></span></div>
+                            </div>
+                        </div>
 
                         <h3>
                             مساعد تعديل الداشبورد
@@ -830,6 +847,8 @@
 
                 </div>
             </section>
+
+            </div>
 
             {% for sheet in sheets_analysis %}
 
@@ -1312,10 +1331,10 @@
                 ).textContent
             );
 
-            const chartTextColor = "#cbd5e8";
+            const chartTextColor = "#64748b";
 
             const chartGridColor =
-                "rgba(255, 255, 255, 0.07)";
+                "rgba(100, 116, 139, 0.10)";
 
             const sheetDimensionsColors = JSON.parse(
                 document.getElementById(
@@ -1356,7 +1375,7 @@
                 new Chart(
                     sheetsChartElement,
                     {
-                    type: "{{ sheet_dimensions_widget.widget_type|default:'bar'|escapejs }}",
+                    type: "line",
 
                     data: {
                         labels: sheetNames,

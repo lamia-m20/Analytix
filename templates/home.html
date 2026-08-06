@@ -1,1289 +1,199 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <meta
-        name="description"
-        content="منصة Analytix لتحليل ومعالجة بيانات ملفات Excel"
-    >
-
-    <title>Analytix | تحليل بيانات Excel</title>
-
-    <style>
-        :root {
-            --background: #03060d;
-            --background-light: #070d1a;
-            --navy: #0c1d3d;
-            --navy-light: #173b7c;
-            --blue: #4277e3;
-            --blue-light: #78a2ff;
-            --white: #ffffff;
-            --text: #c1cbe0;
-            --muted: #7d8ba6;
-            --border: rgba(103, 143, 226, 0.16);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            overflow-x: hidden;
-            color: var(--white);
-            background: var(--background);
-            font-family:
-                Tahoma,
-                Arial,
-                sans-serif;
-        }
-
-        button,
-        input {
-            font-family: inherit;
-        }
-
-        .home-page {
-            min-height: 100vh;
-        }
-
-        .home-container {
-            width: min(1200px, 92%);
-            margin: auto;
-        }
-
-        .section-heading {
-            max-width: 720px;
-            margin: 0 auto 55px;
-            text-align: center;
-        }
-
-        .section-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 17px;
-            padding: 8px 13px;
-            border-radius: 50px;
-            color: #9cb9ff;
-            background: rgba(41, 85, 182, 0.12);
-            border: 1px solid rgba(92, 137, 235, 0.2);
-            font-size: 13px;
-            font-weight: 800;
-        }
-
-        .section-badge::before {
-            content: "";
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: #4b7fe8;
-            box-shadow: 0 0 14px #4b7fe8;
-        }
-
-        .section-title {
-            margin-bottom: 18px;
-            font-size: clamp(29px, 4vw, 45px);
-            line-height: 1.35;
-            font-weight: 900;
-        }
-
-        .section-description {
-            color: var(--muted);
-            font-size: 16px;
-            line-height: 1.9;
-        }
-
-        /* القسم الرئيسي */
-        .hero-section {
-            position: relative;
-            min-height: calc(100vh - 78px);
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            background:
-                radial-gradient(
-                    circle at 80% 30%,
-                    rgba(32, 75, 169, 0.22),
-                    transparent 34%
-                ),
-                radial-gradient(
-                    circle at 15% 70%,
-                    rgba(17, 52, 123, 0.16),
-                    transparent 32%
-                ),
-                linear-gradient(145deg, #03060c, #07101f 60%, #03060c);
-        }
-
-        .hero-section::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            opacity: 0.22;
-            background-image:
-                linear-gradient(
-                    rgba(88, 128, 207, 0.12) 1px,
-                    transparent 1px
-                ),
-                linear-gradient(
-                    90deg,
-                    rgba(88, 128, 207, 0.12) 1px,
-                    transparent 1px
-                );
-            background-size: 55px 55px;
-            mask-image:
-                linear-gradient(
-                    to bottom,
-                    black,
-                    transparent 88%
-                );
-        }
-
-        .hero-glow {
-            position: absolute;
-            width: 440px;
-            height: 440px;
-            left: -180px;
-            top: 13%;
-            border-radius: 50%;
-            background: rgba(27, 70, 165, 0.19);
-            filter: blur(18px);
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
-            align-items: center;
-            gap: 75px;
-            padding: 75px 0;
-        }
-
-        .hero-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 9px;
-            margin-bottom: 22px;
-            padding: 9px 14px;
-            border-radius: 50px;
-            color: #a3bdff;
-            background: rgba(45, 90, 187, 0.12);
-            border: 1px solid rgba(107, 151, 240, 0.19);
-            font-size: 13px;
-            font-weight: 800;
-        }
-
-        .hero-label span:first-child {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #4f83ef;
-            box-shadow: 0 0 15px #4f83ef;
-        }
-
-        .hero-title {
-            max-width: 680px;
-            margin-bottom: 24px;
-            font-size: clamp(39px, 5.4vw, 68px);
-            line-height: 1.25;
-            font-weight: 950;
-            letter-spacing: -1px;
-        }
-
-        .hero-title .highlight {
-            color: transparent;
-            background:
-                linear-gradient(
-                    90deg,
-                    #ffffff,
-                    #75a1ff
-                );
-            background-clip: text;
-            -webkit-background-clip: text;
-        }
-
-        .hero-description {
-            max-width: 650px;
-            margin-bottom: 33px;
-            color: #98a6c0;
-            font-size: 17px;
-            line-height: 2;
-        }
-
-        .hero-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 13px;
-            margin-bottom: 38px;
-        }
-
-        .primary-button,
-        .secondary-button {
-            min-height: 52px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 0 23px;
-            border-radius: 13px;
-            font-size: 15px;
-            font-weight: 900;
-            text-decoration: none;
-            transition: 0.28s ease;
-        }
-
-        .primary-button {
-            color: #ffffff;
-            background: linear-gradient(135deg, #1c438f, #3d70d4);
-            border: 1px solid rgba(135, 173, 255, 0.34);
-            box-shadow: 0 14px 35px rgba(31, 76, 171, 0.32);
-        }
-
-        .primary-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 18px 42px rgba(31, 76, 171, 0.48);
-        }
-
-        .secondary-button {
-            color: #c7d2e7;
-            background: rgba(255, 255, 255, 0.035);
-            border: 1px solid rgba(128, 153, 204, 0.18);
-        }
-
-        .secondary-button:hover {
-            color: #ffffff;
-            background: rgba(64, 103, 188, 0.11);
-            transform: translateY(-3px);
-        }
-
-        .hero-trust {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 22px;
-        }
-
-        .trust-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #7f8ca6;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .trust-icon {
-            width: 22px;
-            height: 22px;
-            display: grid;
-            place-items: center;
-            border-radius: 50%;
-            color: #79a0ff;
-            background: rgba(44, 89, 186, 0.13);
-            font-size: 11px;
-        }
-
-        /* بطاقة رفع الملف */
-        .upload-card {
-            position: relative;
-            padding: 22px;
-            border-radius: 25px;
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(14, 28, 56, 0.94),
-                    rgba(5, 11, 23, 0.95)
-                );
-            border: 1px solid rgba(107, 147, 225, 0.19);
-            box-shadow:
-                0 30px 70px rgba(0, 0, 0, 0.52),
-                inset 0 1px 0 rgba(255, 255, 255, 0.055);
-        }
-
-        .upload-card::before {
-            content: "";
-            position: absolute;
-            inset: -1px;
-            z-index: -1;
-            border-radius: 25px;
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(84, 134, 240, 0.28),
-                    transparent 42%
-                );
-        }
-
-        .window-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-        }
-
-        .window-title {
-            color: #dce5f6;
-            font-size: 14px;
-            font-weight: 800;
-        }
-
-        .window-dots {
-            display: flex;
-            gap: 6px;
-        }
-
-        .window-dots span {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #28416f;
-        }
-
-        .upload-area {
-            padding: 38px 24px;
-            border-radius: 18px;
-            text-align: center;
-            background: rgba(7, 14, 29, 0.7);
-            border: 1px dashed rgba(103, 150, 245, 0.37);
-            transition: 0.3s;
-            cursor: pointer;
-        }
-
-        .upload-area:hover,
-        .upload-area.dragging {
-            background: rgba(20, 48, 104, 0.22);
-            border-color: #5f8ce7;
-        }
-
-        .upload-icon {
-            width: 70px;
-            height: 70px;
-            display: grid;
-            place-items: center;
-            margin: 0 auto 17px;
-            border-radius: 20px;
-            background: linear-gradient(145deg, #173873, #0a1d42);
-            border: 1px solid rgba(104, 148, 237, 0.28);
-            box-shadow: 0 14px 30px rgba(15, 52, 126, 0.25);
-        }
-
-        .upload-icon svg {
-            width: 35px;
-            height: 35px;
-        }
-
-        .upload-title {
-            margin-bottom: 8px;
-            font-size: 17px;
-            font-weight: 900;
-        }
-
-        .upload-description {
-            margin-bottom: 17px;
-            color: #75829e;
-            font-size: 12px;
-            line-height: 1.7;
-        }
-
-        .upload-input {
-            display: none;
-        }
-
-        .select-file-button {
-            display: inline-flex;
-            padding: 10px 18px;
-            border-radius: 10px;
-            color: #ffffff;
-            background: #183d83;
-            border: 1px solid rgba(107, 151, 239, 0.3);
-            font-size: 13px;
-            font-weight: 800;
-        }
-
-        .selected-file {
-            display: none;
-            margin-top: 15px;
-            padding: 11px;
-            border-radius: 10px;
-            color: #9fbbf8;
-            background: rgba(43, 91, 190, 0.11);
-            font-size: 12px;
-        }
-
-        .analysis-preview {
-            margin-top: 18px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .preview-item {
-            padding: 13px 9px;
-            border-radius: 12px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(98, 128, 187, 0.1);
-        }
-
-        .preview-value {
-            display: block;
-            margin-bottom: 5px;
-            color: #82a7ff;
-            font-size: 17px;
-            font-weight: 900;
-        }
-
-        .preview-label {
-            color: #707e99;
-            font-size: 10px;
-        }
-
-        /* المميزات */
-        .features-section {
-            position: relative;
-            padding: 105px 0;
-            background:
-                radial-gradient(
-                    circle at 100% 50%,
-                    rgba(29, 69, 154, 0.11),
-                    transparent 30%
-                ),
-                #050912;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-
-        .feature-card {
-            position: relative;
-            overflow: hidden;
-            min-height: 265px;
-            padding: 30px;
-            border-radius: 19px;
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(15, 29, 56, 0.78),
-                    rgba(6, 12, 24, 0.9)
-                );
-            border: 1px solid var(--border);
-            transition: 0.3s ease;
-        }
-
-        .feature-card::after {
-            content: "";
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            left: -60px;
-            bottom: -60px;
-            border-radius: 50%;
-            background: rgba(37, 84, 181, 0.13);
-            filter: blur(7px);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-7px);
-            border-color: rgba(103, 150, 243, 0.32);
-            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.27);
-        }
-
-        .feature-icon {
-            width: 55px;
-            height: 55px;
-            display: grid;
-            place-items: center;
-            margin-bottom: 22px;
-            border-radius: 15px;
-            color: #83a9ff;
-            background: rgba(42, 88, 187, 0.13);
-            border: 1px solid rgba(99, 144, 237, 0.2);
-            font-size: 24px;
-        }
-
-        .feature-card h3 {
-            margin-bottom: 13px;
-            font-size: 18px;
-        }
-
-        .feature-card p {
-            color: #7f8da8;
-            font-size: 14px;
-            line-height: 1.9;
-        }
-
-        /* خطوات الاستخدام */
-        .workflow-section {
-            padding: 110px 0;
-            background: #03070e;
-        }
-
-        .workflow-grid {
-            position: relative;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
-
-        .workflow-grid::before {
-            content: "";
-            position: absolute;
-            top: 35px;
-            right: 12%;
-            left: 12%;
-            height: 1px;
-            background:
-                linear-gradient(
-                    90deg,
-                    transparent,
-                    #284f9f,
-                    transparent
-                );
-        }
-
-        .workflow-step {
-            position: relative;
-            z-index: 1;
-            text-align: center;
-        }
-
-        .step-number {
-            width: 70px;
-            height: 70px;
-            display: grid;
-            place-items: center;
-            margin: 0 auto 23px;
-            border-radius: 20px;
-            color: #ffffff;
-            background: linear-gradient(145deg, #1b438f, #0b1c3d);
-            border: 1px solid rgba(111, 157, 246, 0.28);
-            box-shadow: 0 12px 30px rgba(17, 54, 132, 0.25);
-            font-size: 20px;
-            font-weight: 900;
-        }
-
-        .workflow-step h3 {
-            margin-bottom: 10px;
-            font-size: 17px;
-        }
-
-        .workflow-step p {
-            color: #77849d;
-            font-size: 13px;
-            line-height: 1.8;
-        }
-
-        /* الإحصائيات */
-        .statistics-section {
-            padding: 80px 0;
-            background:
-                linear-gradient(
-                    135deg,
-                    #08152c,
-                    #050b17
-                );
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .statistics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 18px;
-        }
-
-        .stat-card {
-            padding: 25px 15px;
-            text-align: center;
-            border-left: 1px solid rgba(111, 147, 216, 0.14);
-        }
-
-        .stat-card:last-child {
-            border-left: 0;
-        }
-
-        .stat-value {
-            display: block;
-            margin-bottom: 9px;
-            color: #ffffff;
-            font-size: clamp(31px, 4vw, 46px);
-            font-weight: 950;
-        }
-
-        .stat-value span {
-            color: #5689f1;
-        }
-
-        .stat-label {
-            color: #7f8da7;
-            font-size: 14px;
-        }
-
-        /* الدعوة */
-        .cta-section {
-            padding: 110px 0;
-            background:
-                radial-gradient(
-                    circle at 50% 100%,
-                    rgba(32, 76, 172, 0.17),
-                    transparent 42%
-                ),
-                #040810;
-        }
-
-        .cta-card {
-            position: relative;
-            overflow: hidden;
-            padding: 70px 35px;
-            border-radius: 27px;
-            text-align: center;
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(16, 36, 75, 0.9),
-                    rgba(5, 11, 23, 0.96)
-                );
-            border: 1px solid rgba(102, 146, 236, 0.2);
-            box-shadow: 0 30px 65px rgba(0, 0, 0, 0.32);
-        }
-
-        .cta-card::before,
-        .cta-card::after {
-            content: "";
-            position: absolute;
-            width: 260px;
-            height: 260px;
-            border-radius: 50%;
-            background: rgba(37, 83, 181, 0.15);
-            filter: blur(12px);
-        }
-
-        .cta-card::before {
-            top: -150px;
-            right: -100px;
-        }
-
-        .cta-card::after {
-            bottom: -170px;
-            left: -100px;
-        }
-
-        .cta-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta-card h2 {
-            margin-bottom: 17px;
-            font-size: clamp(30px, 4vw, 47px);
-        }
-
-        .cta-card p {
-            max-width: 660px;
-            margin: 0 auto 29px;
-            color: #8d9bb5;
-            line-height: 1.9;
-        }
-
-        .reveal-element {
-            opacity: 0;
-            transform: translateY(28px);
-            transition:
-                opacity 0.75s ease,
-                transform 0.75s ease;
-        }
-
-        .reveal-element.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        @media (max-width: 1000px) {
-            .hero-content {
-                grid-template-columns: 1fr;
-                gap: 55px;
-            }
-
-            .hero-text {
-                text-align: center;
-            }
-
-            .hero-description {
-                margin-right: auto;
-                margin-left: auto;
-            }
-
-            .hero-buttons,
-            .hero-trust {
-                justify-content: center;
-            }
-
-            .upload-card {
-                width: min(600px, 100%);
-                margin: auto;
-            }
-
-            .features-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .workflow-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 45px 20px;
-            }
-
-            .workflow-grid::before {
-                display: none;
-            }
-        }
-
-        @media (max-width: 700px) {
-            .hero-section {
-                min-height: auto;
-            }
-
-            .hero-content {
-                padding: 70px 0;
-            }
-
-            .hero-title {
-                font-size: 39px;
-            }
-
-            .hero-description {
-                font-size: 15px;
-            }
-
-            .features-grid,
-            .workflow-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .statistics-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .stat-card:nth-child(2) {
-                border-left: 0;
-            }
-
-            .feature-card {
-                min-height: auto;
-            }
-        }
-
-        @media (max-width: 450px) {
-            .hero-buttons {
-                flex-direction: column;
-            }
-
-            .primary-button,
-            .secondary-button {
-                width: 100%;
-            }
-
-            .hero-trust {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .analysis-preview {
-                grid-template-columns: 1fr;
-            }
-
-            .statistics-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stat-card {
-                border-left: 0;
-                border-bottom: 1px solid rgba(111, 147, 216, 0.14);
-            }
-
-            .stat-card:last-child {
-                border-bottom: 0;
-            }
-
-            .cta-card {
-                padding: 55px 20px;
-            }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="منصة Analytix لتحليل ملفات Excel وجودة البيانات وإنشاء لوحات المعلومات والتقارير">
+    <title>Analytix | افهم بياناتك بوضوح</title>
+    <link rel="stylesheet" href="{% static 'css/home-workspace.css' %}">
 </head>
-
-<body>
-    {% include 'header.html' %}
-
-    <main class="home-page">
-        <section class="hero-section" id="home">
-            <div class="hero-glow"></div>
-
-            <div class="home-container hero-content">
-                <div class="hero-text">
-                    <div class="hero-label">
-                        <span></span>
-                        <span>منصة ذكية لتحليل بيانات Excel</span>
-                    </div>
-
-                    <h1 class="hero-title">
-                        حوّل ملفات Excel إلى
-                        <span class="highlight">
-                            قرارات واضحة
-                        </span>
-                    </h1>
-
-                    <p class="hero-description">
-                        ارفع ملفاتك، اكتشف الأخطاء والقيم المفقودة
-                        والتكرارات، نفّذ التحليلات الإحصائية،
-                        وأنشئ لوحات معلومات وتقارير احترافية خلال
-                        خطوات بسيطة.
-                    </p>
-
-<div class="hero-buttons">
-
-    <a href="{% url 'accounts:register' %}" class="primary-button">
-        إنشاء حساب
-    </a>
-
-    <a href="{% url 'accounts:login' %}" class="secondary-button">
-        تسجيل الدخول
-    </a>
-
-    <a href="/datasets/" class="secondary-button">
-        رفع ملف Excel
-    </a>
-
-</div>
-                    <div class="hero-trust">
-                        <div class="trust-item">
-                            <span class="trust-icon">✓</span>
-                            معالجة آمنة
-                        </div>
-
-                        <div class="trust-item">
-                            <span class="trust-icon">✓</span>
-                            نتائج دقيقة
-                        </div>
-
-                        <div class="trust-item">
-                            <span class="trust-icon">✓</span>
-                            تقارير قابلة للتصدير
-                        </div>
-                    </div>
-                </div>
-
-                <div class="upload-card">
-                    <div class="window-bar">
-                        <span class="window-title">
-                            بدء تحليل جديد
-                        </span>
-
-                        <div class="window-dots">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </div>
-
-                    <label
-                        class="upload-area"
-                        id="home-upload-area"
-                        for="home-file-input"
-                    >
-                        <span class="upload-icon">
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    d="M12 15V4M12 4L8 8M12 4L16 8"
-                                    stroke="#FFFFFF"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                />
-
-                                <path
-                                    d="M5 13V19H19V13"
-                                    stroke="#76A1FF"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                />
-                            </svg>
-                        </span>
-
-                        <h2 class="upload-title">
-                            اسحب ملف Excel هنا
-                        </h2>
-
-                        <p class="upload-description">
-                            يدعم ملفات XLSX وXLS حتى الحجم المسموح
-                        </p>
-
-                        <span class="select-file-button">
-                            اختيار ملف
-                        </span>
-
-                        <input
-                            type="file"
-                            id="home-file-input"
-                            class="upload-input"
-                            accept=".xlsx,.xls"
-                        >
-
-                        <div
-                            class="selected-file"
-                            id="home-selected-file"
-                        ></div>
-                    </label>
-
-                    <div class="analysis-preview">
-                        <div class="preview-item">
-                            <span class="preview-value">12K</span>
-                            <span class="preview-label">صف بيانات</span>
-                        </div>
-
-                        <div class="preview-item">
-                            <span class="preview-value">24</span>
-                            <span class="preview-label">عمود</span>
-                        </div>
-
-                        <div class="preview-item">
-                            <span class="preview-value">98%</span>
-                            <span class="preview-label">جودة البيانات</span>
-                        </div>
-                    </div>
-                </div>
+<body class="home-workspace-page">
+    <div class="workspace-shell">
+        <aside class="workspace-sidebar" id="workspace-sidebar" aria-label="التنقل الرئيسي">
+            <div class="sidebar-head">
+                <a href="{% url 'dashboards:home' %}" class="workspace-brand" aria-label="Analytix الرئيسية">
+                    <span class="workspace-brand-mark" aria-hidden="true">
+                        <svg viewBox="0 0 32 32"><path d="M6 23V12h5v11H6Zm8 0V6h5v17h-5Zm8 0v-8h5v8h-5Z"/></svg>
+                    </span>
+                    <span><strong>Analytix</strong><small>منصة تحليل البيانات</small></span>
+                </a>
+                <button class="sidebar-close" id="sidebar-close" type="button" aria-label="إغلاق القائمة">×</button>
             </div>
-        </section>
 
-        <section class="features-section" id="features">
-            <div class="home-container">
-                <div class="section-heading reveal-element">
-                    <span class="section-badge">مميزات المنصة</span>
+            <nav class="sidebar-nav">
+                <a class="active" href="{% url 'dashboards:home' %}"><span>⌂</span>الرئيسية</a>
+                <a href="{% url 'datasets:list' %}"><span>⇧</span>رفع ملف Excel</a>
+                <a href="{% url 'datasets:list' %}#features"><span>⌁</span>التحليلات</a>
+                <a href="{% url 'datasets:list' %}"><span>▦</span>لوحة المعلومات</a>
+                <a href="#reports-card"><span>▤</span>التقارير</a>
+                <a href="{% url 'datasets:list' %}"><span>▱</span>الملفات السابقة</a>
+                <a href="#assistant-panel"><span>✦</span>مساعد Analytix</a>
+            </nav>
 
-                    <h2 class="section-title">
-                        كل ما تحتاجه لفهم بياناتك
-                    </h2>
-
-                    <p class="section-description">
-                        مجموعة متكاملة من الأدوات لفحص وتنظيف وتحليل
-                        البيانات وتحويلها إلى نتائج قابلة للاستخدام.
-                    </p>
-                </div>
-
-                <div class="features-grid">
-                    <article class="feature-card reveal-element">
-                        <div class="feature-icon">⌁</div>
-
-                        <h3>فحص جودة البيانات</h3>
-
-                        <p>
-                            اكتشاف الخلايا الفارغة والتكرارات
-                            والأنواع غير الصحيحة والمشكلات المؤثرة
-                            في دقة التحليل.
-                        </p>
-                    </article>
-
-                    <article class="feature-card reveal-element">
-                        <div class="feature-icon">✦</div>
-
-                        <h3>تنظيف ومعالجة البيانات</h3>
-
-                        <p>
-                            حذف التكرارات، معالجة القيم المفقودة،
-                            تغيير أنواع الأعمدة وتنظيم البيانات
-                            قبل بدء التحليل.
-                        </p>
-                    </article>
-
-                    <article class="feature-card reveal-element">
-                        <div class="feature-icon">▥</div>
-
-                        <h3>تحليلات إحصائية</h3>
-
-                        <p>
-                            حساب المتوسط والوسيط والانحراف المعياري
-                            والارتباطات والمؤشرات الأساسية بسهولة.
-                        </p>
-                    </article>
-
-                    <article class="feature-card reveal-element">
-                        <div class="feature-icon">◫</div>
-
-                        <h3>رسوم بيانية تفاعلية</h3>
-
-                        <p>
-                            عرض النتائج من خلال مخططات الأعمدة والخطوط
-                            والدوائر والجداول التفاعلية.
-                        </p>
-                    </article>
-
-                    <article class="feature-card reveal-element">
-                        <div class="feature-icon">◈</div>
-
-                        <h3>لوحات معلومات</h3>
-
-                        <p>
-                            تجميع أهم الأرقام والرسوم في لوحة واحدة
-                            تساعدك على متابعة مؤشرات الأداء.
-                        </p>
-                    </article>
-
-                    <article class="feature-card reveal-element">
-                        <div class="feature-icon">⇩</div>
-
-                        <h3>تصدير التقارير</h3>
-
-                        <p>
-                            تصدير البيانات والنتائج والتقارير بصيغ
-                            Excel وPDF وCSV للاحتفاظ بها ومشاركتها.
-                        </p>
-                    </article>
-                </div>
+            <div class="sidebar-bottom">
+                <a href="#features"><span>⚙</span>الإعدادات</a>
+                {% if user.is_authenticated %}
+                    <div class="sidebar-user">
+                        <span class="user-avatar">{{ user.username|slice:':1'|upper }}</span>
+                        <span><strong>{{ user.first_name|default:user.username }}</strong><small>حساب المستخدم</small></span>
+                    </div>
+                    <a class="sidebar-auth" href="{% url 'accounts:logout' %}">تسجيل الخروج</a>
+                {% else %}
+                    <a class="sidebar-auth" href="{% url 'accounts:login' %}">تسجيل الدخول</a>
+                    <a class="sidebar-auth secondary" href="{% url 'accounts:register' %}">إنشاء حساب</a>
+                {% endif %}
             </div>
-        </section>
+        </aside>
 
-        <section class="workflow-section" id="workflow">
-            <div class="home-container">
-                <div class="section-heading reveal-element">
-                    <span class="section-badge">طريقة الاستخدام</span>
+        <div class="workspace-overlay" id="workspace-overlay"></div>
 
-                    <h2 class="section-title">
-                        من الملف إلى التقرير في أربع خطوات
-                    </h2>
+        <main class="workspace-main">
+            <header class="workspace-topbar">
+                <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
+                <label class="workspace-search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4 4"/></svg>
+                    <input id="feature-search" type="search" placeholder="ابحث في مميزات Analytix" autocomplete="off">
+                </label>
+                <div class="topbar-actions">
+                    <a class="tool-button" href="#assistant-panel" aria-label="المساعدة" title="المساعدة">؟</a>
+                    <button class="tool-button" type="button" aria-label="الإشعارات" title="الإشعارات">♢</button>
+                    {% if user.is_authenticated %}
+                        <span class="topbar-user"><span>{{ user.username|slice:':1'|upper }}</span>{{ user.first_name|default:user.username }}</span>
+                    {% else %}
+                        <a class="topbar-login" href="{% url 'accounts:login' %}">تسجيل الدخول</a>
+                    {% endif %}
+                    <a class="upload-new" href="{% url 'datasets:list' %}"><span>＋</span> رفع ملف جديد</a>
+                </div>
+            </header>
 
-                    <p class="section-description">
-                        تجربة منظمة وبسيطة تساعدك على الوصول إلى
-                        النتائج دون الحاجة إلى خطوات معقدة.
-                    </p>
+            <div class="workspace-content">
+                <section class="welcome-panel" id="home">
+                    <div class="welcome-copy">
+                        <span class="eyebrow"><i></i>تحليل واضح، من الملف إلى القرار</span>
+                        <h1>كل ما تحتاجه لفهم بياناتك</h1>
+                        <p>ارفع ملفات Excel، حلّل جودة البيانات، أنشئ لوحات معلومات وتقارير احترافية، واستخدم الذكاء الاصطناعي لتخصيص نتائجك.</p>
+                        <div class="welcome-actions">
+                            <a class="button primary" href="{% url 'datasets:list' %}">ابدأ التحليل</a>
+                            <label class="button soft" for="home-file-input">رفع ملف Excel</label>
+                            <input id="home-file-input" type="file" accept=".xlsx,.xls,.xlsm" hidden>
+                        </div>
+                        <p class="file-feedback" id="home-selected-file" role="status"></p>
+                    </div>
+                    <div class="welcome-visual" aria-hidden="true">
+                        <div class="visual-kpis"><span><small>الأوراق</small><b>—</b></span><span><small>الصفوف</small><b>—</b></span><span><small>الجودة</small><b>—%</b></span></div>
+                        <svg viewBox="0 0 520 170" preserveAspectRatio="none">
+                            <g class="chart-grid"><path d="M0 35H520M0 75H520M0 115H520M0 155H520"/></g>
+                            <path class="chart-area" d="M10 136 C75 128,85 115,145 119 S235 72,290 91 S390 35,510 42 V160 H10Z"/>
+                            <path class="chart-line" d="M10 136 C75 128,85 115,145 119 S235 72,290 91 S390 35,510 42"/>
+                            <g class="chart-dots"><circle cx="10" cy="136" r="4"/><circle cx="145" cy="119" r="4"/><circle cx="290" cy="91" r="4"/><circle cx="510" cy="42" r="4"/></g>
+                        </svg>
+                    </div>
+                </section>
+
+                <div class="content-heading" id="features">
+                    <div><span>إمكانات المنصة</span><h2>حلّل بياناتك من كل زاوية</h2></div>
+                    <p>نماذج توضيحية للأدوات التي تحصل عليها بعد رفع ملفك.</p>
                 </div>
 
-                <div class="workflow-grid">
-                    <div class="workflow-step reveal-element">
-                        <div class="step-number">01</div>
-                        <h3>رفع الملف</h3>
-                        <p>
-                            اختر ملف Excel المطلوب تحليله من جهازك.
-                        </p>
-                    </div>
+                <div class="home-dashboard-layout">
+                    <section class="feature-dashboard" aria-label="مميزات Analytix">
+                        <article class="feature-widget excel-widget" data-feature="تحليل ملفات Excel جداول صفوف أعمدة أوراق">
+                            <div class="widget-copy"><span class="widget-icon">▦</span><div><h3>تحليل ملفات Excel</h3><p>قراءة الأوراق والأعمدة والصفوف وتلخيص بنية الملف تلقائيًا.</p></div><a href="{% url 'datasets:list' %}">حلّل ملفًا <b>←</b></a></div>
+                            <div class="mini-sheet" aria-label="نموذج جدول Excel">
+                                <div class="sheet-stats"><span>الأوراق <b>—</b></span><span>الصفوف <b>—</b></span><span>الأعمدة <b>—</b></span></div>
+                                <div class="sheet-table"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                            </div>
+                        </article>
 
-                    <div class="workflow-step reveal-element">
-                        <div class="step-number">02</div>
-                        <h3>فحص البيانات</h3>
-                        <p>
-                            نقرأ الأوراق والأعمدة ونقيّم جودة البيانات.
-                        </p>
-                    </div>
+                        <article class="feature-widget chart-widget wide-widget" data-feature="الرسوم البيانية التفاعلية مخطط خطي أعمدة">
+                            <div class="widget-head"><div><span class="widget-icon">⌁</span><h3>الرسوم البيانية التفاعلية</h3></div><a href="{% url 'datasets:list' %}">عرض التحليلات</a></div>
+                            <p>حوّل بيانات الملف إلى خطوط وأعمدة ومقارنات واضحة.</p>
+                            <div class="mini-line-chart">
+                                <span class="axis-label top">القيمة</span>
+                                <svg viewBox="0 0 620 190" preserveAspectRatio="none" aria-label="رسم خطي توضيحي">
+                                    <g class="chart-grid"><path d="M20 25H610M20 70H610M20 115H610M20 160H610"/></g>
+                                    <path class="chart-area" d="M22 145 L120 132 L220 100 L315 112 L410 60 L505 75 L608 30 V165 H22Z"/>
+                                    <path class="chart-line" d="M22 145 L120 132 L220 100 L315 112 L410 60 L505 75 L608 30"/>
+                                    <g class="chart-dots"><circle cx="22" cy="145" r="4"/><circle cx="120" cy="132" r="4"/><circle cx="220" cy="100" r="4"/><circle cx="315" cy="112" r="4"/><circle cx="410" cy="60" r="4"/><circle cx="505" cy="75" r="4"/><circle cx="608" cy="30" r="4"/></g>
+                                </svg>
+                                <div class="chart-months"><span>يناير</span><span>فبراير</span><span>مارس</span><span>أبريل</span><span>مايو</span><span>يونيو</span></div>
+                            </div>
+                        </article>
 
-                    <div class="workflow-step reveal-element">
-                        <div class="step-number">03</div>
-                        <h3>تنظيف وتحليل</h3>
-                        <p>
-                            اختر عمليات التنظيف والتحليلات المناسبة.
-                        </p>
-                    </div>
+                        <article class="feature-widget quality-widget compact-widget" data-feature="جودة البيانات فحص تقدم نسبة">
+                            <div class="widget-head"><div><span class="widget-icon">✓</span><h3>جودة البيانات</h3></div></div>
+                            <p>مؤشر موحد لاكتمال واتساق البيانات.</p>
+                            <div class="quality-ring"><svg viewBox="0 0 120 120"><circle class="ring-track" cx="60" cy="60" r="48"/><circle class="ring-value" cx="60" cy="60" r="48"/></svg><span><b>—%</b><small>بعد التحليل</small></span></div>
+                        </article>
 
-                    <div class="workflow-step reveal-element">
-                        <div class="step-number">04</div>
-                        <h3>عرض وتصدير</h3>
-                        <p>
-                            شاهد النتائج وحمّل التقرير النهائي.
-                        </p>
-                    </div>
+                        <article class="feature-widget missing-widget compact-widget" data-feature="اكتشاف القيم الفارغة أعمدة مفقودة">
+                            <div class="widget-head"><div><span class="widget-icon">◫</span><h3>القيم الفارغة</h3></div></div>
+                            <p>اعرف الأعمدة التي تحتاج إلى معالجة أولًا.</p>
+                            <div class="horizontal-bars"><span><i style="--w:82%"></i></span><span><i style="--w:58%"></i></span><span><i style="--w:34%"></i></span><span><i style="--w:18%"></i></span></div>
+                        </article>
+
+                        <article class="feature-widget duplicate-widget compact-widget" data-feature="اكتشاف الصفوف المكررة تكرار تنظيف">
+                            <div class="widget-head"><div><span class="widget-icon">⧉</span><h3>الصفوف المكررة</h3></div></div>
+                            <p>تمييز السجلات المتشابهة قبل اعتماد النتائج.</p>
+                            <div class="duplicate-visual"><div><i></i><i></i><i></i></div><div class="offset"><i></i><i></i><i></i></div><span>فحص تلقائي</span></div>
+                        </article>
+
+                        <article class="feature-widget smart-dashboard wide-widget" data-feature="لوحة المعلومات الذكية مؤشرات دونات أعمدة داشبورد">
+                            <div class="widget-head"><div><span class="widget-icon">▥</span><h3>لوحة المعلومات الذكية</h3></div><a href="{% url 'datasets:list' %}">إنشاء لوحة</a></div>
+                            <p>مؤشرات ورسوم مترابطة داخل مساحة واحدة.</p>
+                            <div class="dashboard-preview">
+                                <div class="preview-kpis"><span><small>المؤشر الأول</small><b>—</b></span><span><small>المؤشر الثاني</small><b>—</b></span><span><small>المؤشر الثالث</small><b>—</b></span></div>
+                                <div class="preview-charts"><div class="donut"></div><div class="vertical-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+                            </div>
+                        </article>
+
+                        <article class="feature-widget ai-widget tall-widget" data-feature="تعديل الداشبورد الذكاء الاصطناعي مساعد طلب">
+                            <div class="widget-head"><div><span class="widget-icon assistant-icon">A</span><h3>تعديل الداشبورد بالذكاء الاصطناعي</h3></div></div>
+                            <p>اكتب التغيير المطلوب بلغة واضحة وسيُطبّق على لوحتك بعد التحقق.</p>
+                            <div class="ai-conversation"><span>لوحة المعلومات جاهزة للتخصيص.</span><span class="user-request">غيّر المخطط إلى أعمدة</span><div class="typing"><i></i><i></i><i></i></div></div>
+                            <div class="ai-input"><span>اكتب طلب التعديل...</span><b>➤</b></div>
+                        </article>
+
+                        <article class="feature-widget reports-widget" id="reports-card" data-feature="التقارير الاحترافية Excel PDF CSV PowerPoint تصدير">
+                            <div class="widget-head"><div><span class="widget-icon">⇩</span><h3>التقارير الاحترافية</h3></div></div>
+                            <p>صدّر نتائج التحليل بالصيغ المناسبة لعملك.</p>
+                            <div class="report-formats"><span class="excel">XLSX</span><span class="pdf">PDF</span><span class="csv">CSV</span><span class="ppt">PPTX</span></div>
+                        </article>
+
+                        <article class="feature-widget stats-widget" data-feature="التحليل الإحصائي متوسط وسيط أقل أعلى قيمة">
+                            <div class="widget-head"><div><span class="widget-icon">∑</span><h3>التحليل الإحصائي</h3></div></div>
+                            <p>ملخصات رقمية دقيقة لكل عمود قابل للتحليل.</p>
+                            <div class="stat-preview"><span><small>المتوسط</small><b>—</b></span><span><small>الوسيط</small><b>—</b></span><span><small>الأقل</small><b>—</b></span><span><small>الأعلى</small><b>—</b></span></div>
+                        </article>
+
+                        <article class="feature-widget trend-widget wide-widget" data-feature="تحليل التواريخ والاتجاهات رسم زمني">
+                            <div class="widget-head"><div><span class="widget-icon">↗</span><h3>تحليل التواريخ والاتجاهات</h3></div></div>
+                            <p>تابع التغير عبر الوقت واكتشف الاتجاه العام في بياناتك.</p>
+                            <svg class="trend-chart" viewBox="0 0 620 130" preserveAspectRatio="none" aria-label="رسم اتجاه زمني توضيحي"><g class="chart-grid"><path d="M10 25H610M10 65H610M10 105H610"/></g><path class="chart-area" d="M10 108 C80 98 100 112 165 82 S260 91 320 58 S430 75 500 35 S565 42 610 18 V125 H10Z"/><path class="chart-line" d="M10 108 C80 98 100 112 165 82 S260 91 320 58 S430 75 500 35 S565 42 610 18"/></svg>
+                        </article>
+                    </section>
+
+                    <aside class="assistant-panel" id="assistant-panel">
+                        <div class="assistant-heading"><span class="assistant-logo">A</span><div><h2>مساعد Analytix</h2><small><i></i>جاهز للمساعدة</small></div></div>
+                        <div class="assistant-steps">
+                            <div><span>1</span><p><strong>رفع الملف</strong><small>ابدأ باختيار ملف Excel</small></p></div>
+                            <div><span>2</span><p><strong>فحص البيانات</strong><small>مراجعة الجودة والأنواع</small></p></div>
+                            <div><span>3</span><p><strong>إنشاء التحليل</strong><small>بناء المؤشرات والرسوم</small></p></div>
+                            <div><span>4</span><p><strong>تجهيز لوحة المعلومات</strong><small>نتائج قابلة للتخصيص</small></p></div>
+                        </div>
+                        <div class="assistant-progress-home"><div><span>حالة البداية</span><b>بانتظار ملف</b></div><span><i></i></span></div>
+                        <div class="assistant-tip"><strong>اقتراح</strong><p>ارفع ملفًا منظمًا بعناوين واضحة لتحصل على تحليل أدق.</p></div>
+                        <div class="assistant-tip" id="assistant-answer" role="status" aria-live="polite" hidden></div>
+                        <label class="assistant-prompt"><textarea id="assistant-question" rows="3" placeholder="اسأل عن إمكانات Analytix"></textarea><button id="assistant-send" type="button" aria-label="إرسال">➤</button></label>
+                        <a class="assistant-start" href="{% url 'datasets:list' %}">ابدأ برفع ملف Excel</a>
+                    </aside>
                 </div>
+
+                <p class="no-search-results" id="no-search-results" hidden>لا توجد نتائج مطابقة.</p>
             </div>
-        </section>
-
-        <section class="statistics-section" id="statistics">
-            <div class="home-container">
-                <div class="statistics-grid">
-                    <div class="stat-card reveal-element">
-                        <span class="stat-value">
-                            10<span>K+</span>
-                        </span>
-                        <span class="stat-label">
-                            ملف تم تحليله
-                        </span>
-                    </div>
-
-                    <div class="stat-card reveal-element">
-                        <span class="stat-value">
-                            98<span>%</span>
-                        </span>
-                        <span class="stat-label">
-                            دقة معالجة البيانات
-                        </span>
-                    </div>
-
-                    <div class="stat-card reveal-element">
-                        <span class="stat-value">
-                            25<span>+</span>
-                        </span>
-                        <span class="stat-label">
-                            أداة تحليل ومعالجة
-                        </span>
-                    </div>
-
-                    <div class="stat-card reveal-element">
-                        <span class="stat-value">
-                            24<span>/7</span>
-                        </span>
-                        <span class="stat-label">
-                            وصول إلى المنصة
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="cta-section">
-            <div class="home-container">
-                <div class="cta-card reveal-element">
-                    <div class="cta-content">
-                        <span class="section-badge">
-                            ابدأ الآن
-                        </span>
-
-                        <h2>
-                            بياناتك تحمل إجابات مهمة
-                        </h2>
-
-                        <p>
-                            ارفع أول ملف Excel وابدأ في اكتشاف جودة
-                            بياناتك وتحويل الأرقام إلى تقارير ومعلومات
-                            واضحة تساعدك في اتخاذ القرار.
-                        </p>
-
-                        <a href="/datasets/" class="primary-button">
-                            بدء تحليل ملف
-                            <span>←</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    {% include 'footer.html' %}
-
-    <script>
-        (function () {
-            const fileInput =
-                document.getElementById("home-file-input");
-
-            const uploadArea =
-                document.getElementById("home-upload-area");
-
-            const selectedFile =
-                document.getElementById("home-selected-file");
-
-            function showSelectedFile(file) {
-                if (!file || !selectedFile) {
-                    return;
-                }
-
-                selectedFile.style.display = "block";
-                selectedFile.textContent =
-                    "تم اختيار الملف: " + file.name;
-            }
-
-            if (fileInput) {
-                fileInput.addEventListener("change", function () {
-                    showSelectedFile(fileInput.files[0]);
-                });
-            }
-
-            if (uploadArea) {
-                uploadArea.addEventListener(
-                    "dragover",
-                    function (event) {
-                        event.preventDefault();
-                        uploadArea.classList.add("dragging");
-                    }
-                );
-
-                uploadArea.addEventListener(
-                    "dragleave",
-                    function () {
-                        uploadArea.classList.remove("dragging");
-                    }
-                );
-
-                uploadArea.addEventListener(
-                    "drop",
-                    function (event) {
-                        event.preventDefault();
-                        uploadArea.classList.remove("dragging");
-
-                        const file = event.dataTransfer.files[0];
-
-                        if (!file) {
-                            return;
-                        }
-
-                        const allowedExtensions = [
-                            ".xlsx",
-                            ".xls"
-                        ];
-
-                        const fileName = file.name.toLowerCase();
-
-                        const isAllowed =
-                            allowedExtensions.some(
-                                function (extension) {
-                                    return fileName.endsWith(extension);
-                                }
-                            );
-
-                        if (!isAllowed) {
-                            selectedFile.style.display = "block";
-                            selectedFile.textContent =
-                                "يرجى اختيار ملف Excel بصيغة XLSX أو XLS.";
-                            return;
-                        }
-
-                        showSelectedFile(file);
-                    }
-                );
-            }
-
-            const revealElements =
-                document.querySelectorAll(".reveal-element");
-
-            const observer = new IntersectionObserver(
-                function (entries) {
-                    entries.forEach(function (entry) {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add("visible");
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                },
-                {
-                    threshold: 0.12
-                }
-            );
-
-            revealElements.forEach(function (element) {
-                observer.observe(element);
-            });
-        })();
-    </script>
+        </main>
+    </div>
+    <script src="{% static 'js/home-workspace.js' %}" defer></script>
 </body>
 </html>

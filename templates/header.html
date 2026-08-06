@@ -393,6 +393,13 @@
     </style>
 
     <div class="header-container">
+        <div class="header-search" role="search">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="6.5"></circle>
+                <path d="m16 16 4 4"></path>
+            </svg>
+            <input type="search" id="analytix-page-search" placeholder="ابحث في التحليلات" aria-label="ابحث في التحليلات" autocomplete="off">
+        </div>
 
         <!-- الشعار -->
         <a href="/" class="brand">
@@ -475,6 +482,11 @@
 
         <!-- الحساب والأزرار -->
         <div class="header-actions">
+            <div class="header-tools" aria-label="أدوات Analytix">
+                <button type="button" class="header-tool" title="الإعدادات" aria-label="الإعدادات">⚙</button>
+                <a href="/#contact" class="header-tool" title="المساعدة" aria-label="المساعدة">؟</a>
+                <button type="button" class="header-tool" title="الإشعارات" aria-label="الإشعارات">♢</button>
+            </div>
 
             {% if user.is_authenticated %}
 

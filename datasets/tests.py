@@ -3,7 +3,7 @@ import csv
 import io
 import os
 import zipfile
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 from openpyxl import load_workbook
@@ -345,6 +345,44 @@ class DatasetExportTests(TestCase):
         self.assertGreaterEqual(dpi[0], 299)
         self.assertGreater(image.width, 2000)
         image.close(); chart.close()
+
+    def test_pdf_chart_with_many_categories_stays_vertical(self):
+        from datasets.exporters import _report_chart
+
+        figure = MagicMock()
+        axis = MagicMock()
+        axis.get_xticklabels.return_value = []
+        axis.get_yticklabels.return_value = []
+        with patch('datasets.exporters.plt.subplots', return_value=(figure, axis)):
+            chart = _report_chart(
+                ['فئة 1', 'فئة 2', 'فئة 3', 'فئة 4', 'فئة 5', 'فئة 6'],
+                [1, 2, 3, 4, 5, 6],
+                'المقارنة',
+            )
+
+        axis.bar.assert_called_once()
+        axis.barh.assert_not_called()
+        axis.set_xticklabels.assert_called_once()
+        chart.close()
+
+    def test_powerpoint_chart_with_many_categories_stays_vertical(self):
+        from datasets.powerpoint import _dashboard_chart
+
+        figure = MagicMock()
+        axis = MagicMock()
+        axis.get_xticklabels.return_value = []
+        axis.get_yticklabels.return_value = []
+        axis.bar_label.return_value = []
+        with patch('datasets.powerpoint.plt.subplots', return_value=(figure, axis)):
+            chart = _dashboard_chart(
+                ['فئة 1', 'فئة 2', 'فئة 3', 'فئة 4', 'فئة 5', 'فئة 6'],
+                [1, 2, 3, 4, 5, 6],
+            )
+
+        axis.bar.assert_called_once()
+        axis.barh.assert_not_called()
+        axis.set_xticklabels.assert_called_once()
+        chart.close()
 
     def test_zip_contains_analysis_files_and_readme(self):
         from datasets.exporters import build_csv, build_report_data

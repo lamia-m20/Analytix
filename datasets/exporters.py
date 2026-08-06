@@ -38,7 +38,13 @@ TOP_RESULTS = 10
 MAX_CORRELATION_COLUMNS = 20
 MAX_REPORT_CELLS = 2_000_000
 ARABIC_FONT_NAME = 'AnalytixArabic'
-ARABIC_FONT_FILENAMES = ('NotoSansArabic-Regular.ttf', 'DejaVuSans.ttf')
+ARABIC_FONT_FILENAMES = (
+    'Cairo-Regular.ttf',
+    'Tajawal-Regular.ttf',
+    'IBMPlexSansArabic-Regular.ttf',
+    'NotoSansArabic-Regular.ttf',
+    'DejaVuSans.ttf',
+)
 BRAND_BLUE = '1D4ED8'
 BRAND_LIGHT = 'DBEAFE'
 CHART_COLORS = ['#2563EB', '#14B8A6', '#0EA5E9', '#F59E0B', '#EF4444', '#8B5CF6']
@@ -518,8 +524,11 @@ def _pdf_table(rows, font, widths=None):
 def _report_chart(labels, values, title, kind='bar', colors_list=None):
     buffer = io.BytesIO(); figure = None
     try:
+        arabic_font_path = get_arabic_font_path()
+        font_manager.fontManager.addfont(str(arabic_font_path))
+        chart_font = font_manager.FontProperties(fname=str(arabic_font_path))
         plt.rcParams.update({
-            'font.family': 'DejaVu Sans', 'font.size': 10,
+            'font.size': 10,
             'axes.titlesize': 14, 'axes.labelsize': 10,
             'xtick.labelsize': 9, 'ytick.labelsize': 9,
         })
@@ -529,28 +538,45 @@ def _report_chart(labels, values, title, kind='bar', colors_list=None):
         display_labels = [prepare_arabic_text(x) for x in labels]
         bar_colors = [palette[i % len(palette)] for i in range(len(values))]
         if kind in ('pie', 'donut'):
-            wedges, _, _ = axis.pie(
+            wedges, label_texts, percentage_texts = axis.pie(
                 values, labels=display_labels, colors=bar_colors, autopct='%1.1f%%',
                 startangle=90, pctdistance=.78,
                 wedgeprops={'width': .42 if kind in ('pie', 'donut') else 1, 'edgecolor': 'white'},
             )
+            for label in (*label_texts, *percentage_texts):
+                label.set_fontproperties(chart_font)
             axis.axis('equal')
         elif kind == 'line':
             axis.plot(display_labels, values, marker='o', linewidth=2.6, markersize=6, color=palette[0])
             axis.fill_between(range(len(values)), values, alpha=.08, color=palette[0])
             axis.grid(axis='y', color='#CBD5E1', linewidth=.7, alpha=.65)
-        elif len(values) > 5:
-            axis.barh(display_labels, values, color=bar_colors, height=.62)
-            axis.invert_yaxis(); axis.grid(axis='x', color='#CBD5E1', linewidth=.7, alpha=.65)
         else:
-            axis.bar(display_labels, values, color=bar_colors, width=.62)
+            positions = range(len(values))
+            axis.bar(positions, values, color=bar_colors, width=.62)
+            axis.set_xticks(list(positions))
+            axis.set_xticklabels(
+                display_labels,
+                rotation=24 if len(values) > 5 else 0,
+                ha='right' if len(values) > 5 else 'center',
+            )
             axis.grid(axis='y', color='#CBD5E1', linewidth=.7, alpha=.65)
         if kind not in ('pie', 'donut'):
             axis.set_axisbelow(True)
             axis.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f'{value:,.0f}'))
             for spine in axis.spines.values(): spine.set_visible(False)
-        axis.set_title(prepare_arabic_text(title), pad=14, color='#0F172A', fontweight='bold')
-        figure.tight_layout(pad=1.5); figure.savefig(buffer, format='png', dpi=300, bbox_inches='tight', facecolor=figure.get_facecolor()); buffer.seek(0)
+            for label in (*axis.get_xticklabels(), *axis.get_yticklabels()):
+                label.set_fontproperties(chart_font)
+        axis.set_title(
+            prepare_arabic_text(title), pad=14, color='#0F172A',
+            fontweight='bold', fontproperties=chart_font,
+        )
+        figure.subplots_adjust(
+            left=.10, right=.96,
+            bottom=.26 if len(values) > 5 and kind not in ('pie', 'donut') else .14,
+            top=.86,
+        )
+        figure.savefig(buffer, format='png', dpi=300, facecolor=figure.get_facecolor())
+        buffer.seek(0)
         return buffer
     except Exception:
         logger.warning('A report chart failed', exc_info=True); buffer.close(); return None
@@ -569,8 +595,10 @@ def _widget_chart(widget, report):
         elif widget['aggregation'] in ('average', 'mean'): values = grouped.mean()
         else: values = grouped.count()
         values = values.head(TOP_RESULTS)
-        kind = widget['type'] if widget['type'] in ('bar', 'line', 'pie') else 'bar'
-        return _report_chart([str(x) for x in values.index], values.tolist(), widget['title'], kind, widget['colors'])
+        return _report_chart(
+            [str(x) for x in values.index], values.tolist(),
+            widget['title'], 'bar', widget['colors'],
+        )
     except Exception:
         report['warnings'].append(f'تعذر إنشاء المخطط: {widget["title"]}')
         logger.warning('Dashboard widget chart failed', exc_info=True)
@@ -581,6 +609,12 @@ def _page_frame(canvas, document):
     canvas.saveState(); canvas.setFont(ARABIC_FONT_NAME, 8); canvas.setFillColor(colors.HexColor('#64748B'))
     canvas.drawRightString(A4[0] - 15*mm, A4[1] - 10*mm, prepare_arabic_text('تقرير Analytix الشامل'))
     canvas.drawCentredString(A4[0] / 2, 9*mm, str(document.page)); canvas.restoreState()
+
+
+def _pdf_chart_image(chart):
+    image = Image(chart, width=165*mm, height=80*mm)
+    image.hAlign = 'CENTER'
+    return image
 
 
 def build_pdf_report(dataset, report_data):
@@ -608,7 +642,7 @@ def build_pdf_report(dataset, report_data):
         [s['sheet_count'],s['rows'],s['columns'],f'{s["completion_rate"]}%',s['duplicates'],f'{s["quality_score"]}/100']], font)]
     chart = _report_chart([x['name'] for x in report['sheets']], [x['quality_score'] for x in report['sheets']], 'مقارنة جودة الأوراق')
     if chart:
-        chart_buffers.append(chart); story += [p('جودة الأوراق', heading), Image(chart, width=175*mm, height=80*mm),
+        chart_buffers.append(chart); story += [p('جودة الأوراق', heading), _pdf_chart_image(chart),
             p('المعنى: يقارن الرسم درجة الجودة المحسوبة لكل ورقة.'),
             p(f'الاستنتاج: الجودة العامة للملف {s["quality_score"]} من 100.'),
             p('التوصية: ابدأ بمراجعة الأوراق ذات الدرجة الأقل.')]
@@ -625,7 +659,7 @@ def build_pdf_report(dataset, report_data):
                                  'يقارن الرسم متوسطات أهم الأعمدة الرقمية.', 'راجع الفروق الكبيرة في سياق وحدات القياس لكل عمود.'))
     for chart_title, automatic_chart, observation, recommendation in automatic_charts:
         if automatic_chart:
-            chart_buffers.append(automatic_chart); story += [p(chart_title, heading), Image(automatic_chart, width=175*mm, height=80*mm),
+            chart_buffers.append(automatic_chart); story += [p(chart_title, heading), _pdf_chart_image(automatic_chart),
                                                               p(f'الملاحظة: {observation}'), p(f'التوصية: {recommendation}')]
     for sheet in report['sheets']:
         story += [PageBreak(), p(f'الورقة: {sheet["name"]}', heading), _pdf_table([
@@ -641,7 +675,7 @@ def build_pdf_report(dataset, report_data):
         for widget in report['widgets']:
             widget_image = _widget_chart(widget, report)
             if widget_image:
-                chart_buffers.append(widget_image); story.append(Image(widget_image, width=175*mm, height=80*mm))
+                chart_buffers.append(widget_image); story.append(_pdf_chart_image(widget_image))
     if report['warnings']:
         story += [p('تحذيرات إنشاء التقرير', heading)] + [p(warning) for warning in report['warnings']]
     story += [PageBreak(), p('التوصيات النهائية', heading)] + [p(x) for x in report['executive_summary']['recommendations']]
