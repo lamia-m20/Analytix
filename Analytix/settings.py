@@ -157,6 +157,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
 
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
 
     # دعم اللغة والترجمة
@@ -400,10 +402,7 @@ STORAGES = {
 
     # تخزين ملفات static الخاصة بالتصميم.
     'staticfiles': {
-        'BACKEND': (
-            'django.contrib.staticfiles.storage.'
-            'StaticFilesStorage'
-        ),
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
 
