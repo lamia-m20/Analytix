@@ -235,7 +235,9 @@ tr:hover td { background: #f8fcfd !important; }
     box-shadow: 0 3px 10px rgba(15,23,42,.035);
 }
 .dataset-page .header-search svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--ax-muted); stroke-width: 1.8; }
+.dataset-page .header-search button { width: 18px; height: 18px; display: grid; place-items: center; flex: none; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .dataset-page .header-search input { width: 100%; height: 100%; padding: 0 10px; border: 0 !important; outline: 0 !important; background: transparent !important; }
+.analysis-search-no-results { padding: 12px 14px; margin: 0 0 18px; color: #64748b; border: 1px solid #d8e9ec; border-radius: 10px; background: #f5fbfc; }
 .dataset-page #main-header .header-actions { order: 3; min-width: 240px; justify-content: flex-end; }
 .dataset-page .header-tools { display: flex; align-items: center; gap: 4px; }
 .dataset-page .header-tool {

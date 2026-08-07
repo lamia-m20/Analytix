@@ -535,6 +535,8 @@
     </style>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/analytix-fabric.css' %}">
+    <script src="{% static 'js/analytix-search.js' %}" defer></script>
+    <script src="{% static 'js/analysis-search.js' %}" defer></script>
 </head>
 
 <body class="dataset-page">
@@ -542,6 +544,8 @@
     {% include 'header.html' %}
 
     <main class="page-container">
+
+        <p class="analysis-search-no-results" id="analysis-search-no-results" role="status" hidden>لا توجد نتائج مطابقة.</p>
 
         <div class="welcome">
             مرحبًا
@@ -646,7 +650,7 @@
             </div>
 
             <div class="analytics-layout">
-            <section class="result-card overview-panel">
+            <section class="result-card overview-panel" data-search-title="ملخص التحليل" data-search-keywords="الملخص الإحصائيات الصفوف الأعمدة الأوراق القيم الفارغة الصفوف المكررة">
                 <h2 class="section-title">
                     الملخص العام للملف
                 </h2>
@@ -704,7 +708,7 @@
                 </div>
             </section>
 
-            <section class="dashboard-card">
+            <section class="dashboard-card" data-search-title="لوحة المعلومات" data-search-keywords="لوحة معلومات داشبورد dashboard الرسوم البيانية المخططات التوصيات">
                 <div class="dashboard-heading">
                     <h2 class="section-title">
                         لوحة المعلومات
@@ -782,7 +786,7 @@
                     </form>
                 {% endif %}
 
-                <div class="dashboard-grid">
+                <div class="dashboard-grid" data-search-title="الرسوم البيانية" data-search-keywords="رسوم بيانية مخططات أعمدة خطوط دوائر">
 
                     {% if sheet_dimensions_widget %}
                         <div class="chart-box">
@@ -852,7 +856,7 @@
 
             {% for sheet in sheets_analysis %}
 
-                <section class="sheet-card">
+                <section class="sheet-card" id="analysis-sheet-{{ forloop.counter }}" data-search-title="ورقة {{ sheet.name }}" data-search-keywords="{{ sheet.name }} ورقة Excel القيم الفارغة أنواع الأعمدة الإحصائيات الصفوف المكررة التوصيات">
 
                     <div class="sheet-header">
                         <h2>
@@ -908,7 +912,7 @@
 
                     {% if sheet.has_data %}
 
-                        <div class="subsection">
+                        <div class="subsection" data-search-title="أسماء أعمدة {{ sheet.name }}" data-search-keywords="أسماء الأعمدة أعمدة {{ sheet.columns|join:' ' }}">
                             <h3>
                                 أسماء الأعمدة
                             </h3>
@@ -922,7 +926,7 @@
                             </div>
                         </div>
 
-                        <div class="subsection">
+                        <div class="subsection" data-search-title="أنواع أعمدة {{ sheet.name }}" data-search-keywords="أنواع الأعمدة نوع البيانات {{ sheet.name }}">
                             <h3>
                                 أنواع بيانات الأعمدة
                             </h3>
@@ -953,7 +957,7 @@
                             </div>
                         </div>
 
-                        <div class="subsection">
+                        <div class="subsection" data-search-title="القيم الفارغة في {{ sheet.name }}" data-search-keywords="القيم الفارغة المفقودة الناقصة {{ sheet.name }}">
                             <h3>
                                 القيم الفارغة
                             </h3>
@@ -985,7 +989,7 @@
                         </div>
 
                         {% if sheet.numeric_statistics %}
-                            <div class="subsection">
+                            <div class="subsection" data-search-title="إحصائيات {{ sheet.name }}" data-search-keywords="الإحصائيات الاحصائيات المتوسط الوسيط الأدنى الأعلى {{ sheet.name }}">
                                 <h3>
                                     إحصائيات الأعمدة الرقمية
                                 </h3>
@@ -1037,7 +1041,7 @@
                             </div>
                         {% endif %}
 
-                        <div class="subsection">
+                        <div class="subsection" data-search-title="معاينة {{ sheet.name }}" data-search-keywords="معاينة الصفوف البيانات {{ sheet.name }}">
                             <h3>
                                 معاينة أول 10 صفوف
                             </h3>
@@ -1089,7 +1093,7 @@
             {% endfor %}
 
             {% if dataset and dataset.status == 'ready' %}
-                <section class="result-card export-card" aria-labelledby="export-title">
+                <section class="result-card export-card" aria-labelledby="export-title" data-search-title="التصدير" data-search-keywords="تصدير التقارير Excel PDF CSV PowerPoint توصيات">
                     <h2 class="section-title" id="export-title">تصدير التقرير الشامل</h2>
                     <p>حمّل تقريرًا متكاملًا وجاهزًا للمشاركة يتضمن ملخص التحليل، جودة البيانات، الإحصاءات، الرسوم البيانية، الاستنتاجات والتوصيات.</p>
                     <p>قد يستغرق تجهيز التقرير بعض الوقت للملفات الكبيرة.</p>

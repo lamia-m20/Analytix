@@ -393,13 +393,15 @@
     </style>
 
     <div class="header-container">
-        <div class="header-search" role="search">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="6.5"></circle>
-                <path d="m16 16 4 4"></path>
-            </svg>
+        <form class="header-search" id="analysis-search-form" role="search">
+            <button type="submit" id="analysis-search-button" aria-label="تنفيذ البحث">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="6.5"></circle>
+                    <path d="m16 16 4 4"></path>
+                </svg>
+            </button>
             <input type="search" id="analytix-page-search" placeholder="ابحث في التحليلات" aria-label="ابحث في التحليلات" autocomplete="off">
-        </div>
+        </form>
 
         <!-- الشعار -->
         <a href="/" class="brand">

@@ -7,6 +7,7 @@
     <meta name="description" content="منصة Analytix لتحليل ملفات Excel وجودة البيانات وإنشاء لوحات المعلومات والتقارير">
     <title>Analytix | افهم بياناتك بوضوح</title>
     <link rel="stylesheet" href="{% static 'css/home-workspace.css' %}">
+    <script src="{% static 'js/analytix-search.js' %}" defer></script>
 </head>
 <body class="home-workspace-page">
     <div class="workspace-shell">
@@ -51,10 +52,10 @@
         <main class="workspace-main">
             <header class="workspace-topbar">
                 <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
-                <label class="workspace-search">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4 4"/></svg>
+                <form class="workspace-search" id="feature-search-form" role="search">
+                    <button type="submit" id="feature-search-button" aria-label="تنفيذ البحث"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4 4"/></svg></button>
                     <input id="feature-search" type="search" placeholder="ابحث في مميزات Analytix" autocomplete="off">
-                </label>
+                </form>
                 <div class="topbar-actions">
                     <a class="tool-button" href="#assistant-panel" aria-label="المساعدة" title="المساعدة">؟</a>
                     <button class="tool-button" type="button" aria-label="الإشعارات" title="الإشعارات">♢</button>
@@ -98,7 +99,7 @@
 
                 <div class="home-dashboard-layout">
                     <section class="feature-dashboard" aria-label="مميزات Analytix">
-                        <article class="feature-widget excel-widget" data-feature="تحليل ملفات Excel جداول صفوف أعمدة أوراق">
+                        <article class="feature-widget excel-widget" data-search-title="تحليل ملفات Excel" data-search-keywords="جداول صفوف أعمدة أوراق Excel">
                             <div class="widget-copy"><span class="widget-icon">▦</span><div><h3>تحليل ملفات Excel</h3><p>قراءة الأوراق والأعمدة والصفوف وتلخيص بنية الملف تلقائيًا.</p></div><a href="{% url 'datasets:list' %}">حلّل ملفًا <b>←</b></a></div>
                             <div class="mini-sheet" aria-label="نموذج جدول Excel">
                                 <div class="sheet-stats"><span>الأوراق <b>—</b></span><span>الصفوف <b>—</b></span><span>الأعمدة <b>—</b></span></div>
@@ -106,7 +107,7 @@
                             </div>
                         </article>
 
-                        <article class="feature-widget chart-widget wide-widget" data-feature="الرسوم البيانية التفاعلية مخطط خطي أعمدة">
+                        <article class="feature-widget chart-widget wide-widget" data-search-title="الرسوم البيانية التفاعلية" data-search-keywords="مخطط خطي أعمدة رسوم بيانية">
                             <div class="widget-head"><div><span class="widget-icon">⌁</span><h3>الرسوم البيانية التفاعلية</h3></div><a href="{% url 'datasets:list' %}">عرض التحليلات</a></div>
                             <p>حوّل بيانات الملف إلى خطوط وأعمدة ومقارنات واضحة.</p>
                             <div class="mini-line-chart">
@@ -121,25 +122,25 @@
                             </div>
                         </article>
 
-                        <article class="feature-widget quality-widget compact-widget" data-feature="جودة البيانات فحص تقدم نسبة">
+                        <article class="feature-widget quality-widget compact-widget" data-search-title="جودة البيانات" data-search-keywords="فحص تقدم نسبة جودة">
                             <div class="widget-head"><div><span class="widget-icon">✓</span><h3>جودة البيانات</h3></div></div>
                             <p>مؤشر موحد لاكتمال واتساق البيانات.</p>
                             <div class="quality-ring"><svg viewBox="0 0 120 120"><circle class="ring-track" cx="60" cy="60" r="48"/><circle class="ring-value" cx="60" cy="60" r="48"/></svg><span><b>—%</b><small>بعد التحليل</small></span></div>
                         </article>
 
-                        <article class="feature-widget missing-widget compact-widget" data-feature="اكتشاف القيم الفارغة أعمدة مفقودة">
+                        <article class="feature-widget missing-widget compact-widget" data-search-title="اكتشاف القيم الفارغة" data-search-keywords="أعمدة مفقودة ناقصة">
                             <div class="widget-head"><div><span class="widget-icon">◫</span><h3>القيم الفارغة</h3></div></div>
                             <p>اعرف الأعمدة التي تحتاج إلى معالجة أولًا.</p>
                             <div class="horizontal-bars"><span><i style="--w:82%"></i></span><span><i style="--w:58%"></i></span><span><i style="--w:34%"></i></span><span><i style="--w:18%"></i></span></div>
                         </article>
 
-                        <article class="feature-widget duplicate-widget compact-widget" data-feature="اكتشاف الصفوف المكررة تكرار تنظيف">
+                        <article class="feature-widget duplicate-widget compact-widget" data-search-title="اكتشاف الصفوف المكررة" data-search-keywords="تكرار تنظيف صفوف مكررة">
                             <div class="widget-head"><div><span class="widget-icon">⧉</span><h3>الصفوف المكررة</h3></div></div>
                             <p>تمييز السجلات المتشابهة قبل اعتماد النتائج.</p>
                             <div class="duplicate-visual"><div><i></i><i></i><i></i></div><div class="offset"><i></i><i></i><i></i></div><span>فحص تلقائي</span></div>
                         </article>
 
-                        <article class="feature-widget smart-dashboard wide-widget" data-feature="لوحة المعلومات الذكية مؤشرات دونات أعمدة داشبورد">
+                        <article class="feature-widget smart-dashboard wide-widget" data-search-title="لوحة المعلومات الذكية" data-search-keywords="مؤشرات دونات أعمدة داشبورد dashboard لوحة معلومات">
                             <div class="widget-head"><div><span class="widget-icon">▥</span><h3>لوحة المعلومات الذكية</h3></div><a href="{% url 'datasets:list' %}">إنشاء لوحة</a></div>
                             <p>مؤشرات ورسوم مترابطة داخل مساحة واحدة.</p>
                             <div class="dashboard-preview">
@@ -148,33 +149,33 @@
                             </div>
                         </article>
 
-                        <article class="feature-widget ai-widget tall-widget" data-feature="تعديل الداشبورد الذكاء الاصطناعي مساعد طلب">
+                        <article class="feature-widget ai-widget tall-widget" data-search-title="تعديل الداشبورد بالذكاء الاصطناعي" data-search-keywords="مساعد طلب ذكاء اصطناعي داشبورد">
                             <div class="widget-head"><div><span class="widget-icon assistant-icon">A</span><h3>تعديل الداشبورد بالذكاء الاصطناعي</h3></div></div>
                             <p>اكتب التغيير المطلوب بلغة واضحة وسيُطبّق على لوحتك بعد التحقق.</p>
                             <div class="ai-conversation"><span>لوحة المعلومات جاهزة للتخصيص.</span><span class="user-request">غيّر المخطط إلى أعمدة</span><div class="typing"><i></i><i></i><i></i></div></div>
                             <div class="ai-input"><span>اكتب طلب التعديل...</span><b>➤</b></div>
                         </article>
 
-                        <article class="feature-widget reports-widget" id="reports-card" data-feature="التقارير الاحترافية Excel PDF CSV PowerPoint تصدير">
+                        <article class="feature-widget reports-widget" id="reports-card" data-search-title="التقارير الاحترافية" data-search-keywords="Excel PDF CSV PowerPoint تصدير تقارير">
                             <div class="widget-head"><div><span class="widget-icon">⇩</span><h3>التقارير الاحترافية</h3></div></div>
                             <p>صدّر نتائج التحليل بالصيغ المناسبة لعملك.</p>
                             <div class="report-formats"><span class="excel">XLSX</span><span class="pdf">PDF</span><span class="csv">CSV</span><span class="ppt">PPTX</span></div>
                         </article>
 
-                        <article class="feature-widget stats-widget" data-feature="التحليل الإحصائي متوسط وسيط أقل أعلى قيمة">
+                        <article class="feature-widget stats-widget" data-search-title="التحليل الإحصائي" data-search-keywords="متوسط وسيط أقل أعلى قيمة إحصائيات">
                             <div class="widget-head"><div><span class="widget-icon">∑</span><h3>التحليل الإحصائي</h3></div></div>
                             <p>ملخصات رقمية دقيقة لكل عمود قابل للتحليل.</p>
                             <div class="stat-preview"><span><small>المتوسط</small><b>—</b></span><span><small>الوسيط</small><b>—</b></span><span><small>الأقل</small><b>—</b></span><span><small>الأعلى</small><b>—</b></span></div>
                         </article>
 
-                        <article class="feature-widget trend-widget wide-widget" data-feature="تحليل التواريخ والاتجاهات رسم زمني">
+                        <article class="feature-widget trend-widget wide-widget" data-search-title="تحليل التواريخ والاتجاهات" data-search-keywords="رسم زمني اتجاهات تواريخ">
                             <div class="widget-head"><div><span class="widget-icon">↗</span><h3>تحليل التواريخ والاتجاهات</h3></div></div>
                             <p>تابع التغير عبر الوقت واكتشف الاتجاه العام في بياناتك.</p>
                             <svg class="trend-chart" viewBox="0 0 620 130" preserveAspectRatio="none" aria-label="رسم اتجاه زمني توضيحي"><g class="chart-grid"><path d="M10 25H610M10 65H610M10 105H610"/></g><path class="chart-area" d="M10 108 C80 98 100 112 165 82 S260 91 320 58 S430 75 500 35 S565 42 610 18 V125 H10Z"/><path class="chart-line" d="M10 108 C80 98 100 112 165 82 S260 91 320 58 S430 75 500 35 S565 42 610 18"/></svg>
                         </article>
                     </section>
 
-                    <aside class="assistant-panel" id="assistant-panel">
+                    <aside class="assistant-panel" id="assistant-panel" data-search-title="مساعد Analytix" data-search-keywords="مساعد مساعد Analytix اسأل اسال اسأل عن إمكانات اسال عن امكانات إمكانات Analytix امكانات Analytix الذكاء الاصطناعي محادثة سؤال">
                         <div class="assistant-heading"><span class="assistant-logo">A</span><div><h2>مساعد Analytix</h2><small><i></i>جاهز للمساعدة</small></div></div>
                         <div class="assistant-steps">
                             <div><span>1</span><p><strong>رفع الملف</strong><small>ابدأ باختيار ملف Excel</small></p></div>

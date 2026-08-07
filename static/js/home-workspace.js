@@ -27,55 +27,14 @@
         });
     }
 
-    const search = document.getElementById('feature-search');
-    const widgets = Array.from(document.querySelectorAll('[data-feature]'));
-    const noResults = document.getElementById('no-search-results');
-    function normalizeArabic(value) {
-        return String(value || '')
-            .toLocaleLowerCase('ar')
-            .replace(/[أإآ]/g, 'ا')
-            .replace(/ة/g, 'ه')
-            .replace(/ى/g, 'ي')
-            .replace(/[\u064b-\u065f\u0670]/g, '')
-            .replace(/[^\u0600-\u06ffa-z0-9]+/gi, ' ')
-            .trim();
-    }
-
-    let searchTimer;
-    if (search) {
-        search.addEventListener('input', function () {
-            window.clearTimeout(searchTimer);
-            const query = normalizeArabic(search.value);
-            if (noResults) noResults.hidden = true;
-            if (!query) return;
-
-            searchTimer = window.setTimeout(function () {
-                const terms = query.split(/\s+/).filter(Boolean);
-                const match = widgets.find(function (widget) {
-                    const content = normalizeArabic(widget.dataset.feature + ' ' + widget.textContent);
-                    return terms.every(function (term) { return content.includes(term); });
-                });
-
-                if (!match) {
-                    if (noResults) {
-                        noResults.hidden = false;
-                        noResults.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                    return;
-                }
-
-                match.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                match.animate(
-                    [
-                        { outline: '0 solid rgba(37, 99, 235, 0)', boxShadow: '0 6px 18px rgba(15,23,42,.035)' },
-                        { outline: '4px solid rgba(37, 99, 235, .28)', boxShadow: '0 10px 28px rgba(37,99,235,.16)' },
-                        { outline: '0 solid rgba(37, 99, 235, 0)', boxShadow: '0 6px 18px rgba(15,23,42,.035)' }
-                    ],
-                    { duration: 1600, easing: 'ease-out' }
-                );
-            }, 250);
-        });
-    }
+    const normalizeArabic = window.AnalytixSearch.normalizeArabicSearchText;
+    window.AnalytixSearch.createSearch({
+        inputSelector: '#feature-search',
+        formSelector: '#feature-search-form',
+        buttonSelector: '#feature-search-button',
+        noResultsSelector: '#no-search-results',
+        itemSelector: '[data-search-title]'
+    });
 
     const assistantQuestion = document.getElementById('assistant-question');
     const assistantSend = document.getElementById('assistant-send');

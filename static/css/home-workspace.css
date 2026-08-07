@@ -49,6 +49,7 @@ a { color: inherit; text-decoration: none; }
 .sidebar-toggle { display: none; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 10px; color: var(--text); background: white; cursor: pointer; }
 .workspace-search { width: min(520px,47%); height: 42px; display: flex; align-items: center; gap: 9px; padding: 0 14px; border: 1px solid var(--border); border-radius: 9px; background: white; box-shadow: 0 3px 10px rgba(15,23,42,.035); }
 .workspace-search svg { width: 18px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.8; }
+.workspace-search button { width: 18px; height: 18px; display: grid; place-items: center; flex: none; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .workspace-search input { width: 100%; height: 100%; padding: 0; border: 0; outline: 0; color: var(--text); background: transparent; }
 .workspace-search input::placeholder { color: #94a3b8; }
 .topbar-actions { min-width: 0; display: flex; align-items: center; gap: 7px; margin-inline-start: auto; }
