@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 import math
 import logging
+from pathlib import Path
 
 import pandas as pd
 
@@ -238,6 +239,21 @@ def my_analyses(request):
             ),
         })
     return render(request, 'datasets-templates/my_analyses.html', {'items': items})
+
+
+@login_required
+def dataset_history(request):
+    datasets = (
+        Dataset.objects
+        .filter(user=request.user)
+        .prefetch_related('analysis_jobs')
+        .order_by('-uploaded_at')
+    )
+    return render(
+        request,
+        'datasets-templates/history.html',
+        {'datasets': datasets},
+    )
 
 
 @login_required
@@ -566,8 +582,13 @@ def _add_dashboard_context(context, dashboard):
 @login_required
 def upload_dataset(request):
     if request.method == 'POST':
+        uploaded_file = request.FILES.get('file')
+        post_data = request.POST.copy()
+        if uploaded_file and not post_data.get('title', '').strip():
+            post_data['title'] = Path(uploaded_file.name).stem[:200]
+
         form = DatasetUploadForm(
-            request.POST,
+            post_data,
             request.FILES,
             user=request.user,
         )
@@ -623,17 +644,21 @@ def upload_dataset(request):
                         'من أن الملف سليم.'
                     ),
                 )
-
-                return redirect(
-                    'datasets:detail',
-                    pk=dataset.pk,
+                return render(
+                    request,
+                    'datasets-templates/dataset_home.html',
+                    {
+                        'form': form,
+                        'error_message': (
+                            'تعذر تحليل ملف Excel. تأكد من أن الملف سليم.'
+                        ),
+                    },
                 )
 
             messages.success(
                 request,
                 (
-                    'تم رفع ملف Excel '
-                    'وتجهيزه بنجاح.'
+                    'تم رفع الملف وتحليله بنجاح.'
                 ),
             )
 
@@ -647,12 +672,23 @@ def upload_dataset(request):
             user=request.user
         )
 
+    error_message = None
+    if request.method == 'POST' and form.errors:
+        if uploaded_file is None:
+            error_message = 'يرجى اختيار ملف Excel.'
+        elif 'file' in form.errors:
+            file_errors = ' '.join(form.errors['file'])
+            if 'امتداد الملف' in file_errors or 'مسموح' in file_errors:
+                error_message = 'صيغة الملف غير مدعومة.'
+            else:
+                error_message = file_errors
+        else:
+            error_message = 'تعذر رفع الملف. تحقق من البيانات وحاول مجددًا.'
+
     return render(
         request,
-        'datasets/upload.html',
-        {
-            'form': form,
-        },
+        'datasets-templates/dataset_home.html',
+        {'form': form, 'error_message': error_message},
     )
 
 

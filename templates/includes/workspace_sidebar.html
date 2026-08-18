@@ -1,0 +1,29 @@
+<aside class="workspace-sidebar" id="workspace-sidebar" aria-label="التنقل الرئيسي">
+    <div class="sidebar-head">
+        <a href="{% url 'dashboards:home' %}" class="workspace-brand" aria-label="Analytix الرئيسية">
+            <span class="workspace-brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M6 23V12h5v11H6Zm8 0V6h5v17h-5Zm8 0v-8h5v8h-5Z"/></svg></span>
+            <span><strong>Analytix</strong><small>منصة تحليل البيانات</small></span>
+        </a>
+        <button class="sidebar-close" id="sidebar-close" type="button" aria-label="إغلاق القائمة">×</button>
+    </div>
+    <nav class="sidebar-nav">
+        <a{% if request.resolver_match.url_name == 'home' %} class="active"{% endif %} href="{% url 'dashboards:home' %}"><span>⌂</span>الرئيسية</a>
+        <a{% if request.resolver_match.namespace == 'datasets' and request.resolver_match.url_name == 'list' %} class="active"{% endif %} href="{% url 'datasets:list' %}"><span>⇧</span>رفع ملف Excel</a>
+        <a{% if request.resolver_match.url_name == 'my_analyses' %} class="active"{% endif %} href="{% url 'datasets:my_analyses' %}"><span>▣</span>تحليلاتي</a>
+        <a{% if request.resolver_match.namespace == 'analysis' %} class="active"{% endif %} href="{% url 'analysis:list' %}"><span>⌁</span>التحليلات</a>
+        <a{% if request.resolver_match.namespace == 'dashboards' and request.resolver_match.url_name == 'list' %} class="active"{% endif %} href="{% url 'dashboards:list' %}"><span>▦</span>لوحة المعلومات</a>
+        <a{% if request.resolver_match.namespace == 'reports' %} class="active"{% endif %} href="{% url 'reports:list' %}"><span>▤</span>التقارير</a>
+        <a{% if request.resolver_match.url_name == 'history' %} class="active"{% endif %} href="{% url 'datasets:history' %}"><span>▱</span>الملفات السابقة</a>
+        <a href="{% url 'dashboards:home' %}#assistant-panel"><span>✦</span>مساعد Analytix</a>
+    </nav>
+    <div class="sidebar-bottom">
+        <a{% if request.resolver_match.url_name == 'settings' %} class="active"{% endif %} href="{% url 'accounts:settings' %}"><span>⚙</span>الإعدادات</a>
+        {% if user.is_authenticated %}
+            <div class="sidebar-user"><span class="user-avatar">{% if user.profile.profile_image %}<img src="{{ user.profile.profile_image.url }}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">{% else %}{{ user.username|slice:':1'|upper }}{% endif %}</span><span><strong>{{ user.first_name|default:user.username }}</strong><small>حساب المستخدم</small></span></div>
+            <a class="sidebar-auth" href="{% url 'accounts:logout' %}">تسجيل الخروج</a>
+        {% else %}
+            <a class="sidebar-auth" href="{% url 'accounts:login' %}">تسجيل الدخول</a>
+            <a class="sidebar-auth secondary" href="{% url 'accounts:register' %}">إنشاء حساب</a>
+        {% endif %}
+    </div>
+</aside>

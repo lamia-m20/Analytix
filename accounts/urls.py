@@ -8,6 +8,15 @@ app_name = 'accounts'
 
 
 urlpatterns = [
+    path('settings/', views.settings_view, name='settings'),
+    path(
+        'password-change/',
+        auth_views.PasswordChangeView.as_view(
+            template_name='accounts-templates/password_change.html',
+            success_url='/accounts/settings/',
+        ),
+        name='password_change',
+    ),
     path(
         'register/',
         views.register_view,

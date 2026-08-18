@@ -1,3 +1,10 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-# Create your views here.
+from datasets.models import Dataset
+
+
+@login_required
+def report_list(request):
+    datasets = Dataset.objects.filter(user=request.user, status='ready')
+    return render(request, 'reports-templates/list.html', {'datasets': datasets})

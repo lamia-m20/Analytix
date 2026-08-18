@@ -1,0 +1,49 @@
+{% extends 'workspace_section_base.html' %}
+{% block title %}إعدادات الحساب | Analytix{% endblock %}
+{% block content %}
+<style>
+.account-settings{color:#17233d}.settings-title{margin-bottom:24px}.settings-title h1{margin:0 0 7px;color:#75a0ff}.settings-title p{margin:0;color:#aebbd2}.settings-shell{display:grid;grid-template-columns:230px minmax(0,1fr);overflow:hidden;border:1px solid rgba(104,151,255,.2);border-radius:24px;background:#f7f9fd;box-shadow:0 24px 60px rgba(0,0,0,.28)}.settings-menu{padding:28px 18px;background:#edf2fb;border-left:1px solid #dce5f4}.settings-menu h2{margin:0 10px 22px;color:#142a50;font-size:18px}.settings-menu a{display:flex;align-items:center;gap:11px;margin:6px 0;padding:13px 14px;border-radius:11px;color:#52627a;text-decoration:none;font-weight:700}.settings-menu a.active{color:#fff;background:#356ee8;box-shadow:0 8px 18px rgba(53,110,232,.24)}.settings-pane{min-height:610px;padding:38px;background:#fff}.pane-heading{margin-bottom:27px;padding-bottom:18px;border-bottom:1px solid #e8edf5}.pane-heading h2{margin:0 0 7px;color:#142a50}.pane-heading p{margin:0;color:#738199}.settings-message{margin-bottom:20px;padding:13px 16px;border-radius:10px;color:#166534;background:#dcfce7}.profile-hero{display:flex;align-items:center;gap:22px;margin-bottom:32px}.profile-avatar{display:grid;place-items:center;width:104px;height:104px;overflow:hidden;flex:0 0 104px;border:4px solid #fff;border-radius:50%;color:#fff;background:linear-gradient(145deg,#356ee8,#75a0ff);box-shadow:0 8px 25px rgba(53,110,232,.25);font-size:34px;font-weight:800}.profile-avatar img{width:100%;height:100%;object-fit:cover}.image-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}.image-actions input{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0}.btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 17px;border:0;border-radius:10px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}.btn-primary{color:#fff;background:#356ee8}.btn-muted{color:#43516a;background:#edf2f9}.btn-danger{color:#b42318;background:#fff0ee}.profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:19px}.field{display:grid;gap:8px}.field.full{grid-column:1/-1}.field label{font-size:14px;color:#43516a;font-weight:700}.field input,.field select,.password-form input{width:100%;padding:13px 14px;border:1px solid #d9e1ed;border-radius:10px;color:#17233d;background:#fbfcfe;font:inherit;outline:none}.field input:focus,.field select:focus,.password-form input:focus{border-color:#4e83ff;box-shadow:0 0 0 3px rgba(78,131,255,.12)}.field-error,.form-errors{color:#b42318;font-size:13px}.save-row{display:flex;justify-content:flex-end;margin-top:28px}.password-form{display:grid;gap:18px;max-width:620px}.password-form p{display:grid;gap:8px;margin:0;color:#43516a;font-weight:700}.password-form ul{margin:4px 18px 0;color:#738199;font-size:13px;font-weight:400}.info-list{display:grid;gap:14px}.info-row{display:flex;justify-content:space-between;gap:20px;padding:17px;border:1px solid #e4eaf3;border-radius:12px;background:#fbfcfe}.info-row span{color:#65748b}.info-row strong{color:#17233d}.empty-note{padding:22px;border-radius:13px;color:#65748b;background:#f5f8fc;line-height:1.8}@media(max-width:850px){.settings-shell{grid-template-columns:1fr}.settings-menu{border-left:0;border-bottom:1px solid #dce5f4}.settings-menu h2{display:none}.settings-menu nav{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.settings-menu a{justify-content:center;padding:11px 6px;font-size:13px}.settings-pane{min-height:0;padding:25px}.profile-grid{grid-template-columns:1fr}}@media(max-width:520px){.settings-menu nav{grid-template-columns:repeat(2,1fr)}.profile-hero{align-items:flex-start;flex-direction:column}.settings-pane{padding:20px}.info-row{align-items:flex-start;flex-direction:column}}
+</style>
+<div class="account-settings">
+    <header class="settings-title"><h1>إعدادات الحساب</h1><p>إدارة بياناتك وتفضيلات حسابك بأمان.</p></header>
+    <div class="settings-shell">
+        <aside class="settings-menu"><h2>الإعدادات</h2><nav>
+            <a class="{% if section == 'profile' %}active{% endif %}" href="?section=profile">الملف الشخصي</a>
+            <a class="{% if section == 'password' %}active{% endif %}" href="?section=password">كلمة المرور</a>
+            <a class="{% if section == 'preferences' %}active{% endif %}" href="?section=preferences">التفضيلات</a>
+            <a class="{% if section == 'security' %}active{% endif %}" href="?section=security">الأمان</a>
+        </nav></aside>
+        <section class="settings-pane">
+            {% for message in messages %}<div class="settings-message" role="status">{{ message }}</div>{% endfor %}
+            {% if section == 'profile' %}
+                <div class="pane-heading"><h2>الملف الشخصي</h2><p>حدّث صورتك ومعلومات حسابك الأساسية.</p></div>
+                <div class="profile-hero">
+                    <span class="profile-avatar">{% if profile.profile_image %}<img src="{{ profile.profile_image.url }}" alt="صورة {{ user.username }}">{% else %}{{ user.username|slice:':1'|upper }}{% endif %}</span>
+                    <div><strong>{{ user.get_full_name|default:user.username }}</strong><p class="muted">{{ user.email|default:'لا يوجد بريد إلكتروني' }}</p>
+                        <form class="image-actions" method="post" enctype="multipart/form-data">{% csrf_token %}<input type="hidden" name="action" value="upload_image"><label class="btn btn-primary" for="profile-image-input">تغيير الصورة</label><input id="profile-image-input" name="profile_image" type="file" accept="image/jpeg,image/png,image/webp" onchange="this.form.submit()">{% if profile.profile_image %}<button class="btn btn-danger" form="delete-image-form" type="submit">حذف الصورة</button>{% endif %}</form>
+                        {% if image_form.profile_image.errors %}<div class="field-error">{{ image_form.profile_image.errors|striptags }}</div>{% endif %}
+                        {% if profile.profile_image %}<form id="delete-image-form" method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_image"></form>{% endif %}
+                    </div>
+                </div>
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="profile"><div class="profile-grid">
+                    <div class="field"><label for="id_username">اسم المستخدم</label>{{ account_form.username }}<span class="field-error">{{ account_form.username.errors|striptags }}</span></div>
+                    <div class="field"><label for="id_email">البريد الإلكتروني</label>{{ account_form.email }}<span class="field-error">{{ account_form.email.errors|striptags }}</span></div>
+                    <div class="field"><label for="id_first_name">الاسم الأول</label>{{ account_form.first_name }}</div><div class="field"><label for="id_last_name">الاسم الأخير</label>{{ account_form.last_name }}</div>
+                    <div class="field"><label for="id_phone">رقم الهاتف</label>{{ profile_form.phone }}</div><div class="field"><label for="id_company_name">الشركة</label>{{ profile_form.company_name }}</div>
+                    <div class="field full"><label for="id_account_type">نوع الحساب</label>{{ profile_form.account_type }}</div>
+                </div><div class="save-row"><button class="btn btn-primary" type="submit">حفظ التغييرات</button></div></form>
+            {% elif section == 'password' %}
+                <div class="pane-heading"><h2>كلمة المرور</h2><p>لحماية حسابك، سيتم إرسال رابط آمن إلى بريدك الإلكتروني لتعيين كلمة مرور جديدة.</p></div>
+                <div class="info-list"><div class="info-row"><span>البريد الإلكتروني المرتبط</span><strong>{{ user.email|default:'غير مضاف' }}</strong></div></div>
+                <form class="save-row" method="post">{% csrf_token %}<input type="hidden" name="action" value="send_password_reset"><button class="btn btn-primary" type="submit"{% if not user.email %} disabled{% endif %}>إرسال رابط تغيير كلمة المرور</button></form>
+            {% elif section == 'preferences' %}
+                <div class="pane-heading"><h2>التفضيلات</h2><p>الإعدادات المتاحة فعليًا لحسابك.</p></div>
+                <div class="info-list"><div class="info-row"><span>الحد الأقصى لحجم ملف Excel</span><strong>{{ profile.max_file_size_mb }} ميجابايت</strong></div></div>
+            {% else %}
+                <div class="pane-heading"><h2>الأمان</h2><p>معلومات الأمان المتوفرة لحسابك.</p></div>
+                <div class="info-list"><div class="info-row"><span>البريد الإلكتروني المرتبط</span><strong>{{ user.email|default:'غير مضاف' }}</strong></div><div class="info-row"><span>حالة الحساب</span><strong>{% if user.is_active %}نشط{% else %}غير نشط{% endif %}</strong></div><div class="info-row"><span>آخر تسجيل دخول</span><strong>{{ user.last_login|date:"Y/m/d - H:i"|default:'غير متوفر' }}</strong></div></div><div class="save-row"><a class="btn btn-primary" href="?section=password">تغيير كلمة المرور</a></div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

@@ -1,7 +1,13 @@
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.shortcuts import redirect, render
+
+from .forms import AccountSettingsForm, ProfileImageForm, ProfileSettingsForm
+from .models import UserProfile
 
 
 def register_view(request):
@@ -135,3 +141,77 @@ def password_reset_request_view(request):
 def logout_view(request):
     logout(request)
     return redirect('/')
+
+
+@login_required
+def settings_view(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    section = request.GET.get('section', 'profile')
+    if section not in {'profile', 'password', 'preferences', 'security'}:
+        section = 'profile'
+
+    account_form = AccountSettingsForm(instance=request.user)
+    profile_form = ProfileSettingsForm(instance=profile)
+    image_form = ProfileImageForm(instance=profile)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'profile':
+            account_form = AccountSettingsForm(request.POST, instance=request.user)
+            profile_form = ProfileSettingsForm(request.POST, instance=profile)
+            if account_form.is_valid() and profile_form.is_valid():
+                with transaction.atomic():
+                    account_form.save()
+                    profile_form.save()
+                messages.success(request, 'تم حفظ تغييرات الملف الشخصي بنجاح.')
+                return redirect('accounts:settings')
+            section = 'profile'
+        elif action == 'upload_image':
+            image_form = ProfileImageForm(request.POST, request.FILES, instance=profile)
+            if image_form.is_valid():
+                old_image = profile.profile_image
+                image_form.save()
+                if old_image and old_image.name != profile.profile_image.name:
+                    old_image.delete(save=False)
+                messages.success(request, 'تم تحديث صورة الحساب بنجاح.')
+                return redirect('accounts:settings')
+            section = 'profile'
+        elif action == 'delete_image' and profile.profile_image:
+            profile.profile_image.delete(save=False)
+            profile.profile_image = None
+            profile.save(update_fields=['profile_image', 'updated_at'])
+            messages.success(request, 'تم حذف صورة الحساب.')
+            return redirect('accounts:settings')
+        elif action == 'send_password_reset':
+            section = 'password'
+            if request.user.email:
+                reset_form = PasswordResetForm({'email': request.user.email})
+                if reset_form.is_valid():
+                    reset_form.save(
+                        request=request,
+                        use_https=request.is_secure(),
+                        email_template_name='accounts-templates/password_reset_email.txt',
+                        subject_template_name='accounts-templates/password_reset_subject.txt',
+                    )
+                messages.success(
+                    request,
+                    'تم إرسال رابط تغيير كلمة المرور إلى بريدك الإلكتروني.',
+                )
+            else:
+                messages.error(
+                    request,
+                    'لا يوجد بريد إلكتروني مرتبط بالحساب لإرسال الرابط.',
+                )
+            return redirect('/accounts/settings/?section=password')
+
+    return render(
+        request,
+        'accounts-templates/settings.html',
+        {
+            'profile': profile,
+            'section': section,
+            'account_form': account_form,
+            'profile_form': profile_form,
+            'image_form': image_form,
+        },
+    )

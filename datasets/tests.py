@@ -2,6 +2,7 @@ from io import BytesIO
 import csv
 import io
 import os
+import tempfile
 import zipfile
 from unittest.mock import MagicMock, patch
 
@@ -13,6 +14,7 @@ from pptx.util import Inches
 from PIL import Image as PILImage
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.storage import FileSystemStorage
 from django.test import TestCase
 from django.urls import reverse
 
@@ -714,6 +716,7 @@ class DatasetDashboardTests(TestCase):
             'صيغة الملف غير مدعومة',
         )
 
+
     def test_dashboard_edit_request_displays_confirmation(self):
         dataset = self._dataset_with_structure()
         with patch(
@@ -970,6 +973,80 @@ class DatasetDashboardTests(TestCase):
             ),
             widget_ids,
         )
+
+
+class DatasetUploadFlowTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username='uploader', password='test-password'
+        )
+        self.other = get_user_model().objects.create_user(username='other-uploader')
+        self.client.force_login(self.user)
+        self.temp_media = tempfile.TemporaryDirectory()
+        field = Dataset._meta.get_field('file')
+        self.original_storage = field.storage
+        field.storage = FileSystemStorage(location=self.temp_media.name)
+        self.addCleanup(setattr, field, 'storage', self.original_storage)
+        self.addCleanup(self.temp_media.cleanup)
+
+    def _excel_file(self):
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            pd.DataFrame({'المبيعات': [100, 200]}).to_excel(
+                writer, sheet_name='البيانات', index=False
+            )
+        return SimpleUploadedFile(
+            'تقرير المبيعات.xlsx',
+            buffer.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
+    def test_upload_page_get_returns_200(self):
+        response = self.client.get(reverse('datasets:upload'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'enctype="multipart/form-data"')
+        self.assertContains(response, 'name="file"')
+
+    def test_post_without_file_stays_on_upload_with_arabic_error(self):
+        response = self.client.post(reverse('datasets:upload'), {})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'يرجى اختيار ملف Excel.')
+        self.assertEqual(Dataset.objects.count(), 0)
+
+    def test_unsupported_extension_shows_clear_error(self):
+        response = self.client.post(
+            reverse('datasets:upload'),
+            {'file': SimpleUploadedFile('data.txt', b'not excel')},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'صيغة الملف غير مدعومة.')
+        self.assertEqual(Dataset.objects.count(), 0)
+
+    def test_valid_post_without_javascript_title_redirects_to_saved_result(self):
+        response = self.client.post(
+            reverse('datasets:upload'), {'file': self._excel_file()}
+        )
+        dataset = Dataset.objects.get()
+        self.assertEqual(dataset.user, self.user)
+        self.assertEqual(dataset.title, 'تقرير المبيعات')
+        self.assertRedirects(
+            response,
+            reverse('datasets:detail', args=[dataset.pk]),
+            fetch_redirect_response=False,
+        )
+        self.assertNotEqual(response.url, reverse('datasets:list'))
+
+        detail = self.client.get(response.url)
+        self.assertEqual(detail.status_code, 200)
+        dataset_count = Dataset.objects.count()
+        self.client.get(response.url)
+        self.assertEqual(Dataset.objects.count(), dataset_count)
+
+        analyses = self.client.get(reverse('datasets:my_analyses'))
+        self.assertContains(analyses, dataset.original_filename)
+
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(response.url).status_code, 404)
 
 
 class DashboardAIServiceTests(TestCase):

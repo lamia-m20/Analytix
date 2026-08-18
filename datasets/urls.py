@@ -12,6 +12,7 @@ urlpatterns = [
         views.my_analyses,
         name='my_analyses',
     ),
+    path('history/', views.dataset_history, name='history'),
     path(
         '',
         views.dataset_list,

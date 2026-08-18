@@ -11,42 +11,7 @@
 </head>
 <body class="home-workspace-page">
     <div class="workspace-shell">
-        <aside class="workspace-sidebar" id="workspace-sidebar" aria-label="التنقل الرئيسي">
-            <div class="sidebar-head">
-                <a href="{% url 'dashboards:home' %}" class="workspace-brand" aria-label="Analytix الرئيسية">
-                    <span class="workspace-brand-mark" aria-hidden="true">
-                        <svg viewBox="0 0 32 32"><path d="M6 23V12h5v11H6Zm8 0V6h5v17h-5Zm8 0v-8h5v8h-5Z"/></svg>
-                    </span>
-                    <span><strong>Analytix</strong><small>منصة تحليل البيانات</small></span>
-                </a>
-                <button class="sidebar-close" id="sidebar-close" type="button" aria-label="إغلاق القائمة">×</button>
-            </div>
-
-            <nav class="sidebar-nav">
-                <a class="active" href="{% url 'dashboards:home' %}"><span>⌂</span>الرئيسية</a>
-                <a href="{% url 'datasets:list' %}"><span>⇧</span>رفع ملف Excel</a>
-                <a href="{% url 'datasets:my_analyses' %}"><span>▣</span>تحليلاتي</a>
-                <a href="{% url 'datasets:list' %}#features"><span>⌁</span>التحليلات</a>
-                <a href="{% url 'datasets:list' %}"><span>▦</span>لوحة المعلومات</a>
-                <a href="#reports-card"><span>▤</span>التقارير</a>
-                <a href="{% url 'datasets:list' %}"><span>▱</span>الملفات السابقة</a>
-                <a href="#assistant-panel"><span>✦</span>مساعد Analytix</a>
-            </nav>
-
-            <div class="sidebar-bottom">
-                <a href="#features"><span>⚙</span>الإعدادات</a>
-                {% if user.is_authenticated %}
-                    <div class="sidebar-user">
-                        <span class="user-avatar">{{ user.username|slice:':1'|upper }}</span>
-                        <span><strong>{{ user.first_name|default:user.username }}</strong><small>حساب المستخدم</small></span>
-                    </div>
-                    <a class="sidebar-auth" href="{% url 'accounts:logout' %}">تسجيل الخروج</a>
-                {% else %}
-                    <a class="sidebar-auth" href="{% url 'accounts:login' %}">تسجيل الدخول</a>
-                    <a class="sidebar-auth secondary" href="{% url 'accounts:register' %}">إنشاء حساب</a>
-                {% endif %}
-            </div>
-        </aside>
+        {% include 'includes/workspace_sidebar.html' %}
 
         <div class="workspace-overlay" id="workspace-overlay"></div>
 
@@ -65,7 +30,6 @@
                     {% else %}
                         <a class="topbar-login" href="{% url 'accounts:login' %}">تسجيل الدخول</a>
                     {% endif %}
-                    <a class="upload-new" href="{% url 'datasets:list' %}"><span>＋</span> رفع ملف جديد</a>
                 </div>
             </header>
 
@@ -76,11 +40,8 @@
                         <h1>كل ما تحتاجه لفهم بياناتك</h1>
                         <p>ارفع ملفات Excel، حلّل جودة البيانات، أنشئ لوحات معلومات وتقارير احترافية، واستخدم الذكاء الاصطناعي لتخصيص نتائجك.</p>
                         <div class="welcome-actions">
-                            <a class="button primary" href="{% url 'datasets:list' %}">ابدأ التحليل</a>
-                            <label class="button soft" for="home-file-input">رفع ملف Excel</label>
-                            <input id="home-file-input" type="file" accept=".xlsx,.xls,.xlsm" hidden>
+                            <a class="button primary" href="{% url 'datasets:upload' %}">ابدأ التحليل</a>
                         </div>
-                        <p class="file-feedback" id="home-selected-file" role="status"></p>
                     </div>
                     <div class="welcome-visual" aria-hidden="true">
                         <div class="visual-kpis"><span><small>الأوراق</small><b>—</b></span><span><small>الصفوف</small><b>—</b></span><span><small>الجودة</small><b>—%</b></span></div>
@@ -188,7 +149,6 @@
                         <div class="assistant-tip"><strong>اقتراح</strong><p>ارفع ملفًا منظمًا بعناوين واضحة لتحصل على تحليل أدق.</p></div>
                         <div class="assistant-tip" id="assistant-answer" role="status" aria-live="polite" hidden></div>
                         <label class="assistant-prompt"><textarea id="assistant-question" rows="3" placeholder="اسأل عن إمكانات Analytix"></textarea><button id="assistant-send" type="button" aria-label="إرسال">➤</button></label>
-                        <a class="assistant-start" href="{% url 'datasets:list' %}">ابدأ برفع ملف Excel</a>
                     </aside>
                 </div>
 

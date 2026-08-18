@@ -9,6 +9,44 @@ from .models import UserProfile
 User = get_user_model()
 
 
+class AccountSettingsForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name']
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if User.objects.exclude(pk=self.instance.pk).filter(email__iexact=email).exists():
+            raise forms.ValidationError('البريد الإلكتروني مستخدم في حساب آخر.')
+        return email
+
+
+class ProfileSettingsForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['phone', 'company_name', 'account_type']
+
+
+class ProfileImageForm(forms.ModelForm):
+    MAX_IMAGE_SIZE = 3 * 1024 * 1024
+    ALLOWED_CONTENT_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
+
+    class Meta:
+        model = UserProfile
+        fields = ['profile_image']
+
+    def clean_profile_image(self):
+        image = self.cleaned_data.get('profile_image')
+        if not image:
+            raise forms.ValidationError('اختر صورة أولًا.')
+        if image.size > self.MAX_IMAGE_SIZE:
+            raise forms.ValidationError('يجب ألا يتجاوز حجم الصورة 3 ميجابايت.')
+        content_type = getattr(image, 'content_type', '')
+        if content_type not in self.ALLOWED_CONTENT_TYPES:
+            raise forms.ValidationError('الصيغ المدعومة هي JPG وPNG وWebP فقط.')
+        return image
+
+
 class RegisterForm(UserCreationForm):
     first_name = forms.CharField(
         max_length=150,

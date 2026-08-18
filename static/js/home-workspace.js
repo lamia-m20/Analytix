@@ -16,17 +16,6 @@
     if (closeButton) closeButton.addEventListener('click', function () { setSidebar(false); });
     if (overlay) overlay.addEventListener('click', function () { setSidebar(false); });
 
-    const fileInput = document.getElementById('home-file-input');
-    const fileFeedback = document.getElementById('home-selected-file');
-    if (fileInput && fileFeedback) {
-        fileInput.addEventListener('change', function () {
-            const file = fileInput.files && fileInput.files[0];
-            if (!file) return;
-            fileFeedback.textContent = 'تم اختيار: ' + file.name + ' — انتقل إلى صفحة التحليل لإكمال الرفع.';
-            fileFeedback.classList.add('visible');
-        });
-    }
-
     const normalizeArabic = window.AnalytixSearch.normalizeArabicSearchText;
     window.AnalytixSearch.createSearch({
         inputSelector: '#feature-search',
