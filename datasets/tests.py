@@ -33,6 +33,7 @@ from dashboards.services.dashboard_ai import (
 from dashboards.services.dashboard_store import (
     get_or_create_dataset_dashboard,
 )
+from analysis.models import AnalysisJob, AnalysisResult
 
 from .models import Dataset
 from .models import DatasetColumn
@@ -226,12 +227,25 @@ class DatasetExportTests(TestCase):
                 self.assertEqual(len(insight_panels), 1)
                 self.assertEqual(len([shape for shape in slide.shapes if shape.name == 'CHART_KPI']), 4)
                 background = slide.background.fill.fore_color.rgb
-                self.assertEqual(str(background), '17324A')
+                self.assertEqual(str(background), '08121E')
         executive_names = {shape.name for shape in summary_slide.shapes}
         self.assertIn('DASHBOARD_SIDEBAR', executive_names)
         self.assertIn('EXECUTIVE_BAR', executive_names)
         self.assertIn('EXECUTIVE_DONUT', executive_names)
         self.assertIn('EXECUTIVE_GAUGE', executive_names)
+        dashboard_slides = list(presentation.slides)[1:-1]
+        self.assertTrue(all(
+            any(shape.name == 'DASHBOARD_SIDEBAR' for shape in slide.shapes)
+            for slide in dashboard_slides
+        ))
+        self.assertTrue(any(
+            shape.name in {'QUALITY_BAR', 'COMPLETION_DONUT', 'QUALITY_GAUGE'}
+            for slide in presentation.slides for shape in slide.shapes
+        ))
+        self.assertTrue(any(
+            shape.name == 'SHEET_DASHBOARD_CHART'
+            for slide in presentation.slides for shape in slide.shapes
+        ))
         for slide in presentation.slides:
             for shape in slide.shapes:
                 self.assertGreaterEqual(shape.left, 0)
@@ -585,6 +599,104 @@ class DatasetDashboardTests(TestCase):
             1,
         )
         self.assertContains(response, 'لوحة المعلومات')
+
+    def _saved_analysis(self, dataset):
+        sheet = dataset.sheets.first()
+        job = AnalysisJob.objects.create(
+            owner=dataset.user,
+            dataset=dataset,
+            sheet=sheet,
+            name=dataset.title,
+            status='completed',
+            progress=100,
+        )
+        return AnalysisResult.objects.create(
+            analysis_job=job,
+            summary={
+                'analysis_complete': True,
+                'file_name': 'sales.xlsx',
+                'sheets_count': 1,
+                'total_rows': 3,
+                'total_columns': 2,
+                'total_missing_values': 0,
+                'total_numeric_columns': 1,
+                'sheets_analysis': [],
+                'chart_sheet_names': [],
+                'chart_rows': [],
+                'chart_columns': [],
+                'chart_missing_values': [],
+                'numeric_chart_labels': [],
+                'numeric_chart_means': [],
+                'numeric_chart_max_values': [],
+                'numeric_chart_min_values': [],
+            },
+        )
+
+    def test_my_analyses_requires_login_and_only_lists_owner_data(self):
+        own = self._dataset_with_structure()
+        self._saved_analysis(own)
+        other = get_user_model().objects.create_user(username='other')
+        foreign = self._dataset_with_structure(user=other)
+        self._saved_analysis(foreign)
+
+        response = self.client.get(reverse('datasets:my_analyses'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'sales.xlsx')
+        listed_ids = [item['dataset'].pk for item in response.context['items']]
+        self.assertEqual(listed_ids, [own.pk])
+
+        self.client.logout()
+        response = self.client.get(reverse('datasets:my_analyses'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_saved_analysis_opens_without_rereading_excel_or_new_records(self):
+        dataset = self._dataset_with_structure()
+        self._saved_analysis(dataset)
+        get_or_create_dataset_dashboard(dataset, has_numeric_columns=True)
+        dataset_count = Dataset.objects.count()
+        widget_count = DashboardWidget.objects.count()
+
+        with patch('datasets.views._analyze_excel') as analyze:
+            response = self.client.get(
+                reverse('datasets:detail', args=[dataset.pk])
+            )
+            refresh = self.client.get(
+                reverse('datasets:detail', args=[dataset.pk])
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(refresh.status_code, 200)
+        analyze.assert_not_called()
+        self.assertEqual(Dataset.objects.count(), dataset_count)
+        self.assertEqual(DashboardWidget.objects.count(), widget_count)
+
+    def test_persisting_same_upload_is_idempotent(self):
+        from datasets.views import _save_analysis_result
+
+        dataset = self._dataset_with_structure()
+        context = self._saved_analysis(dataset).summary
+        AnalysisJob.objects.filter(dataset=dataset).delete()
+
+        _save_analysis_result(dataset, context)
+        first_widget_count = DashboardWidget.objects.count()
+        _save_analysis_result(dataset, context)
+
+        self.assertEqual(AnalysisJob.objects.filter(dataset=dataset).count(), 1)
+        self.assertEqual(
+            AnalysisResult.objects.filter(analysis_job__dataset=dataset).count(),
+            1,
+        )
+        self.assertEqual(DashboardWidget.objects.count(), first_widget_count)
+
+    def test_other_user_cannot_open_saved_analysis(self):
+        dataset = self._dataset_with_structure()
+        self._saved_analysis(dataset)
+        other = get_user_model().objects.create_user(username='intruder')
+        self.client.force_login(other)
+        response = self.client.get(
+            reverse('datasets:detail', args=[dataset.pk])
+        )
+        self.assertEqual(response.status_code, 404)
 
     def test_non_excel_file_is_rejected(self):
         response = self.client.post(

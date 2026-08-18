@@ -8,6 +8,11 @@ app_name = 'datasets'
 
 urlpatterns = [
     path(
+        'my-analyses/',
+        views.my_analyses,
+        name='my_analyses',
+    ),
+    path(
         '',
         views.dataset_list,
         name='list',

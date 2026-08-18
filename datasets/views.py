@@ -11,6 +11,8 @@ import logging
 
 import pandas as pd
 
+from analysis.models import AnalysisJob, AnalysisResult
+
 from dashboards.services.dashboard_ai import (
     DashboardAIError,
 )
@@ -37,6 +39,67 @@ from .exporters import (
 from .powerpoint import PPTX_CONTENT_TYPE, build_powerpoint_report
 
 logger = logging.getLogger(__name__)
+
+
+def _save_analysis_result(dataset, analysis_context):
+    """Persist the upload analysis and initialise its dashboard exactly once."""
+    sheet = dataset.sheets.order_by('index').first()
+    if sheet is None:
+        return None
+
+    job, _ = AnalysisJob.objects.get_or_create(
+        owner=dataset.user,
+        dataset=dataset,
+        sheet=sheet,
+        analysis_type='descriptive',
+        defaults={'name': dataset.title},
+    )
+    job.status = 'completed'
+    job.progress = 100
+    job.completed_at = timezone.now()
+    job.error_message = ''
+    job.save(update_fields=[
+        'status', 'progress', 'completed_at', 'error_message', 'updated_at',
+    ])
+
+    result, _ = AnalysisResult.objects.update_or_create(
+        analysis_job=job,
+        defaults={
+            'summary': analysis_context,
+            'statistics': {
+                key: analysis_context.get(key)
+                for key in (
+                    'sheets_count', 'total_rows', 'total_columns',
+                    'total_missing_values', 'total_numeric_columns',
+                )
+            },
+            'table_data': analysis_context.get('sheets_analysis', []),
+            'rows_before_cleaning': analysis_context.get('total_rows', 0),
+            'rows_after_cleaning': analysis_context.get('total_rows', 0),
+        },
+    )
+    dashboard = get_or_create_dataset_dashboard(
+        dataset,
+        has_numeric_columns=bool(analysis_context.get('total_numeric_columns')),
+    )
+    dashboard.widgets.filter(analysis_result__isnull=True).update(
+        analysis_result=result,
+    )
+    return result
+
+
+def _get_saved_analysis(dataset):
+    result = (
+        AnalysisResult.objects
+        .filter(
+            analysis_job__dataset=dataset,
+            analysis_job__owner=dataset.user,
+            analysis_job__status='completed',
+        )
+        .order_by('-updated_at')
+        .first()
+    )
+    return (result.summary, result) if result and result.summary else (None, None)
 
 
 def _export_dataset(request, dataset_id, export_type):
@@ -131,6 +194,50 @@ def dataset_list(request):
         'datasets-templates/dataset_home.html',
         context,
     )
+
+
+@login_required
+def my_analyses(request):
+    datasets = (
+        Dataset.objects
+        .filter(user=request.user)
+        .prefetch_related('sheets', 'analysis_jobs__result')
+        .order_by('-uploaded_at')
+    )
+    items = []
+    for dataset in datasets:
+        sheets = list(dataset.sheets.all())
+        result = next(
+            (
+                job.result for job in dataset.analysis_jobs.all()
+                if job.status == 'completed' and hasattr(job, 'result')
+            ),
+            None,
+        )
+        summary = result.summary if result else {}
+        total_cells = sum(sheet.row_count * sheet.column_count for sheet in sheets)
+        missing = summary.get('total_missing_values', 0)
+        quality_score = (
+            round(max(0, (1 - (missing / total_cells)) * 100), 1)
+            if total_cells else None
+        )
+        items.append({
+            'dataset': dataset,
+            'sheets_count': len(sheets),
+            'rows_count': summary.get(
+                'total_rows', sum(sheet.row_count for sheet in sheets)
+            ),
+            'columns_count': summary.get(
+                'total_columns', sum(sheet.column_count for sheet in sheets)
+            ),
+            'quality_score': quality_score,
+            'dashboard': (
+                dataset.user.dashboards.filter(
+                    layout_settings__dataset_id=dataset.pk,
+                ).first()
+            ),
+        })
+    return render(request, 'datasets-templates/my_analyses.html', {'items': items})
 
 
 @login_required
@@ -437,6 +544,25 @@ def _build_custom_widget_charts(
     return charts
 
 
+def _add_dashboard_context(context, dashboard):
+    for widget in dashboard.widgets.all():
+        if not widget.is_visible:
+            continue
+        source = (widget.settings or {}).get('source')
+        if source == 'sheet_dimensions':
+            context['sheet_dimensions_widget'] = widget
+            context['sheet_dimensions_colors'] = (widget.settings or {}).get('colors', [])
+        elif source == 'missing_values':
+            context['missing_values_widget'] = widget
+            context['missing_values_colors'] = (widget.settings or {}).get('colors', [])
+        elif source == 'numeric_means':
+            context['numeric_means_widget'] = widget
+            context['numeric_means_colors'] = (widget.settings or {}).get('colors', [])
+        elif source == 'numeric_ranges':
+            context['numeric_ranges_widget'] = widget
+            context['numeric_ranges_colors'] = (widget.settings or {}).get('colors', [])
+
+
 @login_required
 def upload_dataset(request):
     if request.method == 'POST':
@@ -471,6 +597,9 @@ def upload_dataset(request):
                     dataset,
                     uploaded_file,
                 )
+                uploaded_file.seek(0)
+                analysis_context = _analyze_excel(uploaded_file)
+                _save_analysis_result(dataset, analysis_context)
 
             except Exception as error:
                 dataset.status = 'failed'
@@ -541,12 +670,22 @@ def dataset_detail(request, pk):
         'dataset': dataset,
     }
 
-    if dataset.status == 'ready' and dataset.file:
+    saved_context, _ = _get_saved_analysis(dataset)
+    if saved_context:
+        context.update(saved_context)
+        dashboard = get_or_create_dataset_dashboard(
+            dataset,
+            has_numeric_columns=bool(context.get('total_numeric_columns')),
+        )
+        context['dashboard'] = dashboard
+        _add_dashboard_context(context, dashboard)
+    elif dataset.status == 'ready' and dataset.file:
         try:
             dataset.file.open('rb')
             context.update(
                 _analyze_excel(dataset.file)
             )
+            _save_analysis_result(dataset, context)
 
             dashboard = get_or_create_dataset_dashboard(
                 dataset,
@@ -555,33 +694,7 @@ def dataset_detail(request, pk):
                 ),
             )
             context['dashboard'] = dashboard
-
-            for widget in dashboard.widgets.all():
-                if not widget.is_visible:
-                    continue
-
-                source = widget.settings.get('source')
-
-                if source == 'sheet_dimensions':
-                    context['sheet_dimensions_widget'] = widget
-                    context['sheet_dimensions_colors'] = (
-                        widget.settings or {}
-                    ).get('colors', [])
-                elif source == 'missing_values':
-                    context['missing_values_widget'] = widget
-                    context['missing_values_colors'] = (
-                        widget.settings or {}
-                    ).get('colors', [])
-                elif source == 'numeric_means':
-                    context['numeric_means_widget'] = widget
-                    context['numeric_means_colors'] = (
-                        widget.settings or {}
-                    ).get('colors', [])
-                elif source == 'numeric_ranges':
-                    context['numeric_ranges_widget'] = widget
-                    context['numeric_ranges_colors'] = (
-                        widget.settings or {}
-                    ).get('colors', [])
+            _add_dashboard_context(context, dashboard)
 
             context['custom_widget_charts'] = (
                 _build_custom_widget_charts(
